@@ -1,6 +1,6 @@
 #pragma once
 
-#include "location.hpp"
+#include "location.h"
 
 struct Ship
 {

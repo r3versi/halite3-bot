@@ -1,5 +1,5 @@
-#include "src/game.hpp"
-#include "src/log.hpp"
+#include "src/game.h"
+#include "src/log.h"
 
 #include <random>
 #include <ctime>
