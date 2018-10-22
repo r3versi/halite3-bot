@@ -16,6 +16,9 @@ int main(int argc, char *argv[])
     logger::start("MyCrappyBotV1");
     logger::log("RNG seed " + to_string(rng_seed));
 
+    Game game = Game();
+    game.ready("MyCrappyBotV1");
+
     while (true)
     {
 

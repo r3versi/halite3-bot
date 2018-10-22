@@ -9,7 +9,7 @@
 namespace input {
     static std::string get_string()
     {
-        std::string result;
+        std::string result = "";
         std::getline(std::cin, result);
         if (!std::cin.good())
         {

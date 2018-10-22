@@ -1,17 +1,24 @@
 #pragma once
 
+#include "grid.h"
 #include "player.h"
 #include "input.h"
+#include "log.h"
+
+#include <string>
+#include <iostream>
 
 struct Game
 {
-    Game()
-    {
-        // Ignore first line containing strings
-        input::get_string();
+    int my_id, num_players;
+    int width, height;
+    int total_halite;
+    
+    Grid grid;
+    Player players[4];
 
-        int my_id, num_players;
-        input::get_sstream() >> my_id >> num_players;
-    }
-
+    Game() {};
+    void init();
+    void update();
+    void ready(const std::string& name);
 };
