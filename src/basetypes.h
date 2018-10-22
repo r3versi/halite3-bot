@@ -27,7 +27,7 @@ class Grid
   public:
     size_t width, height;
     Grid() : width(0), height(0) { grid = nullptr; }
-    Grid(int width, int height) : width(width), height(height)
+    Grid(size_t width, size_t height) : width(width), height(height)
     {
         grid = (T **)calloc(width, sizeof(T *) * height);
         for (size_t i = 0; i < width; i++)
@@ -55,20 +55,22 @@ class Grid
         {
             for (size_t j = 0; j < g.width; j++)
                 os << g.at(i, j) << " ";
-            os << endl;
+            os << std::endl;
         }
+        return os;
     }
 };
 
 class Entity
 {
   public:
-    bool active;
+    
     int id, owner;
+    bool active;
     Point pos;
 
     Entity() : id(0), owner(0), active(false), pos(0, 0) {}
-    Entity(int id, int owner, int x, int y) : id(id), owner(owner), pos(x, y), active(true) {}
+    Entity(int id, int owner, int x, int y) : id(id), owner(owner), active(true), pos(x, y) {}
 };
 
 class Ship : public Entity
@@ -85,7 +87,7 @@ class Ship : public Entity
         this->halite = halite;
     }
 
-    inline friend std::ostream &operator<<(std::ostream &os, Ship &s) { os << "S" << s.id << " " << s.owner << " " << s.pos << " " << s.halite; }
+    inline friend std::ostream &operator<<(std::ostream &os, Ship &s) { return os << "S" << s.id << " " << s.owner << " " << s.pos << " " << s.halite; }
 };
 
 class Dropoff : public Entity
@@ -100,7 +102,7 @@ class Dropoff : public Entity
         pos = Point(x, y);
     }
 
-    inline friend std::ostream &operator<<(std::ostream &os, Dropoff &d) { os << "D" << d.id << " " << d.owner << " " << d.pos; }
+    inline friend std::ostream &operator<<(std::ostream &os, Dropoff &d) { return os << "D" << d.id << " " << d.owner << " " << d.pos; }
 };
 
 class Player
@@ -113,8 +115,8 @@ class Player
     size_t ships[MAX_SHIPS];
     size_t dropoffs[MAX_DROPOFFS];
 
-    Player() : id(0), halite(0), spawn(0, 0, 0, 0), ships{0}, dropoffs{0} {}
-    Player(int id, int x, int y) : id(id), halite(0), spawn(id, id, x, y), ships{0}, dropoffs{id} {}
+    Player() : id(0), halite(0), spawn(0, 0, 0, 0), n_ships(0), n_dropoffs(0), ships{0}, dropoffs{0} {}
+    Player(size_t id, int x, int y) : id(id), halite(0), spawn(id, id, x, y), n_ships(0), n_dropoffs(1), ships{0}, dropoffs{id} {}
 
     void update(size_t n_ships, size_t n_dropoffs, size_t halite)
     {

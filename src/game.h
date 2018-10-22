@@ -40,7 +40,7 @@ class Game
 
     void init_input()
     {
-        string line;
+        std::string line;
         std::cin >> line;
 
         std::cin >> my_id >> num_players;
@@ -56,7 +56,7 @@ class Game
         std::cin >> map_width >> map_height;
         grid = Map(map_width, map_height);
 
-        int halite;
+        size_t halite;
         for (size_t y = 0; y < map_height; y++)
         {
             for (size_t x = 0; x < map_width; x++)
@@ -83,7 +83,7 @@ class Game
 
         for (size_t i = 0; i < num_players; i++)
         {
-            int id, n_ships, n_dropoffs, halite;
+            size_t id, n_ships, n_dropoffs, halite;
             std::cin >> id >> n_ships >> n_dropoffs >> halite;
 
             players[id].update(n_ships, n_dropoffs, halite);
@@ -91,7 +91,7 @@ class Game
             for (size_t j = 0; j < n_ships; j++)
             {
                 int ship_id, x, y, cargo;
-                std::cin >> ship_id, x, y, cargo;
+                std::cin >> ship_id >> x >> y >> cargo;
 
                 ships[ship_id].update(x, y, cargo);
                 players[id].ships[j] = ship_id;
@@ -107,7 +107,7 @@ class Game
             }
         }
 
-        int tiles;
+        size_t tiles;
         std::cin >> tiles;
 
         for (size_t i = 0; i < tiles; i++)
