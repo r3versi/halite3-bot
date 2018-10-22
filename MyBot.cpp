@@ -18,14 +18,25 @@ int main(int argc, char *argv[])
 
     Game game;
     game.init_input();
+    game.dump();
+
     cout << "MyCrappyBotV1" << endl;
 
+    Player* me = game.me;
     while (true)
     {
         game.turn_update();
+        game.dump();
         start = NOW;
         
-
+        
+        if (me->halite >= 1000)
+            cout << "s ";
+        for(size_t i = 0; i < me->n_ships; i++)
+        {
+            cout << me->ships[i] << " n";
+        }
+        cout << endl;
         
     }
 }
