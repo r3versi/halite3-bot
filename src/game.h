@@ -10,6 +10,8 @@ class Game
   public:
     size_t my_id, num_players, map_width, map_height, turn;
 
+    Player* me;
+
     Map grid;
     Player players[4];
     Ship ships[4 * MAX_SHIPS];
@@ -21,6 +23,27 @@ class Game
     Dropoff cache_dropoffs[4 * MAX_DROPOFFS];
 
     Game() {}
+    void dump()
+    {
+        std::cerr << my_id << " " << num_players << " " << map_width << " " << map_height << " " << turn << std::endl;
+        std::cerr << "me: " << me << std::endl;
+        std::cerr << grid << std::endl;
+        
+        for(size_t i = 0; i < num_players; i++)
+        {
+            std::cerr << players[i] << std::endl;
+            
+            for(size_t j = 0; j < players[i].n_ships; j++)
+            {
+                std::cerr << ships[players[i].ships[j]] << std::endl;
+            }
+            for (size_t j = 0; j < players[i].n_dropoffs; j++)
+            {
+                std::cerr << dropoffs[players[i].dropoffs[j]] << std::endl;
+            }
+        }       
+        
+    }
 
     void load()
     {
@@ -43,7 +66,8 @@ class Game
         std::string line;
         std::cin >> line;
 
-        std::cin >> my_id >> num_players;
+        std::cin >> num_players >> my_id;
+        me = players + my_id;
 
         for (size_t i = 0; i < num_players; i++)
         {

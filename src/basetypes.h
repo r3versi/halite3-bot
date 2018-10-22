@@ -124,6 +124,8 @@ class Player
         this->n_dropoffs = n_dropoffs;
         this->halite = halite;
     }
+
+    inline friend std::ostream &operator<<(std::ostream &os, Player& p) { return os << "P" << p.id << " " << p.halite << " " << p.spawn; }
 };
 
 using Map = Grid<int>;
