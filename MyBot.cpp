@@ -1,10 +1,13 @@
-#include "src/game.h"
-#include "src/log.h"
-
-#include <random>
-#include <ctime>
+#include <bits/stdc++.h>
+#include <game.h>
 
 using namespace std;
+using namespace std::chrono;
+
+#define NOW high_resolution_clock::now()
+#define TURNTIME duration_cast<microseconds>(NOW - start).count() / 1000.
+
+static auto start = NOW;
 
 int main(int argc, char *argv[])
 {
@@ -13,17 +16,16 @@ int main(int argc, char *argv[])
     else            rng_seed = static_cast<unsigned int>(time(nullptr));
     mt19937 rng(rng_seed);
 
-    logger::start("MyCrappyBotV1");
-    logger::log("RNG seed " + to_string(rng_seed));
-
-    Game game = Game();
-    game.ready("MyCrappyBotV1");
+    Game game;
+    game.init_input();
+    cout << "MyCrappyBotV1" << endl;
 
     while (true)
     {
+        game.turn_update();
+        start = NOW;
+        
 
-        break;
+        
     }
-
-    logger::log("Game ending");
 }
