@@ -1,5 +1,6 @@
 #include <bits/stdc++.h>
-#include <game.h>
+#include <src/game.h>
+
 
 using namespace std;
 using namespace std::chrono;
@@ -26,17 +27,20 @@ int main(int argc, char *argv[])
     while (true)
     {
         game.turn_update();
-        game.dump();
+        game.save();
         start = NOW;
+
+        cerr << "TURN UPDATED " << game.turn << " @" << TURNTIME << endl;
+        game.dump(false);
         
         
         if (me->halite >= 1000)
-            cout << "s ";
-        for(size_t i = 0; i < me->n_ships; i++)
+            cout << "g ";
+        
+        for(auto& ship : me->ships)
         {
-            cout << me->ships[i] << " n";
+            cout << "m " << ship->id << " n";
         }
         cout << endl;
-        
     }
 }

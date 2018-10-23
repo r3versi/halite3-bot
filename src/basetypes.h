@@ -1,6 +1,11 @@
 #pragma once
 
+#include <container.h>
 #include <constants.h>
+
+#include <cmath>
+#include <algorithm>
+#include <iostream>
 
 struct Point
 {
@@ -59,6 +64,14 @@ class Grid
         }
         return os;
     }
+
+    int dist(const Point& p, const Point& q) 
+    {
+        int dx = std::abs(p.x - q.x);
+        int dy = std::abs(p.y - q.y);
+
+        return std::min(dx, (int)width - dx) + std::min(dy, (int)height - dy);
+    }
 };
 
 class Entity
@@ -77,12 +90,15 @@ class Ship : public Entity
 {
   public:
     int halite;
-    Ship() : Entity(), halite(0) {}
-    Ship(int id, int owner, int x, int y, int halite) : Entity(id, owner, x, y), halite(halite) {}
+    bool inspired;
+    Ship() : Entity(), halite(0), inspired(false) {}
+    Ship(int id, int owner, int x, int y, int halite) : Entity(id, owner, x, y), halite(halite), inspired(false) {}
 
-    inline void update(int x, int y, int halite)
+    inline void update(int owner, int x, int y, int halite)
     {
         active = true;
+        inspired = false;
+        this->owner = owner;
         pos = Point(x, y);
         this->halite = halite;
     }
@@ -105,24 +121,28 @@ class Dropoff : public Entity
     inline friend std::ostream &operator<<(std::ostream &os, Dropoff &d) { return os << "D" << d.id << " " << d.owner << " " << d.pos; }
 };
 
+using PlayerShips = Container<MAX_SHIPS, Ship *>;
+using PlayerDropoffs = Container<MAX_DROPOFFS, Dropoff *>;
+
 class Player
 {
   public:
     size_t id, halite;
-    Dropoff spawn;
+    Point spawn;
 
-    size_t n_ships, n_dropoffs;
-    size_t ships[MAX_SHIPS];
-    size_t dropoffs[MAX_DROPOFFS];
+    PlayerShips ships;
+    PlayerDropoffs dropoffs;
 
-    Player() : id(0), halite(0), spawn(0, 0, 0, 0), n_ships(0), n_dropoffs(0), ships{0}, dropoffs{0} {}
-    Player(size_t id, int x, int y) : id(id), halite(0), spawn(id, id, x, y), n_ships(0), n_dropoffs(1), ships{0}, dropoffs{id} {}
-
-    void update(size_t n_ships, size_t n_dropoffs, size_t halite)
+    Player() : id(0), halite(0), spawn(0, 0), ships(), dropoffs() {}
+    Player(size_t id, int x, int y, Dropoff* shipyard) : id(id), halite(0), spawn(x, y)
     {
-        this->n_ships = n_ships;
-        this->n_dropoffs = n_dropoffs;
+        dropoffs.put(shipyard);
+    }
+
+    void update(size_t halite)
+    {
         this->halite = halite;
+        ships.clear();
     }
 
     inline friend std::ostream &operator<<(std::ostream &os, Player& p) { return os << "P" << p.id << " " << p.halite << " " << p.spawn; }
@@ -130,3 +150,9 @@ class Player
 
 using Map = Grid<int>;
 using Mask = Grid<bool>;
+
+
+using ShipCluster = Container<MAX_CLUSTER_SIZE, Ship *>;
+using ShipClusterMoves = Container<MAX_CLUSTER_SIZE, int>;
+
+using Solution = Container<MAX_DEPTH, ShipClusterMoves>;

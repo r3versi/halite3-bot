@@ -23,23 +23,27 @@ class Game
     Dropoff cache_dropoffs[4 * MAX_DROPOFFS];
 
     Game() {}
-    void dump()
+    void dump(bool dump_map = true)
     {
-        std::cerr << my_id << " " << num_players << " " << map_width << " " << map_height << " " << turn << std::endl;
-        std::cerr << "me: " << me << std::endl;
-        std::cerr << grid << std::endl;
-        
+        if (dump_map)
+        {
+            std::cerr << my_id << " " << num_players << " " << map_width << " " << map_height << " " << turn << std::endl;
+            std::cerr << "me: " << me << std::endl;
+            std::cerr << grid << std::endl;
+        }
+
         for(size_t i = 0; i < num_players; i++)
         {
             std::cerr << players[i] << std::endl;
             
-            for(size_t j = 0; j < players[i].n_ships; j++)
+            for(auto& ship : players[i].ships)
             {
-                std::cerr << ships[players[i].ships[j]] << std::endl;
+                std::cerr << *ship << std::endl;
             }
-            for (size_t j = 0; j < players[i].n_dropoffs; j++)
+
+            for (auto& dropoff : players[i].dropoffs)
             {
-                std::cerr << dropoffs[players[i].dropoffs[j]] << std::endl;
+                std::cerr << *dropoff << std::endl;
             }
         }       
         
@@ -73,8 +77,8 @@ class Game
         {
             int id, x, y;
             std::cin >> id >> x >> y;
-            players[id] = Player(id, x, y);
             dropoffs[id] = Dropoff(id, id, x, y);
+            players[id] = Player(id, x, y, dropoffs+id);
         }
 
         std::cin >> map_width >> map_height;
@@ -110,15 +114,15 @@ class Game
             size_t id, n_ships, n_dropoffs, halite;
             std::cin >> id >> n_ships >> n_dropoffs >> halite;
 
-            players[id].update(n_ships, n_dropoffs, halite);
-
+            players[id].update(halite);
+            dropoffs[id] = Dropoff();
             for (size_t j = 0; j < n_ships; j++)
             {
                 int ship_id, x, y, cargo;
                 std::cin >> ship_id >> x >> y >> cargo;
 
-                ships[ship_id].update(x, y, cargo);
-                players[id].ships[j] = ship_id;
+                ships[ship_id].update(id, x, y, cargo);
+                players[id].ships.put(ships + ship_id);
             }
 
             for (size_t j = 0; j < n_dropoffs; j++)
@@ -127,7 +131,7 @@ class Game
                 std::cin >> dropoff_id >> x >> y;
 
                 dropoffs[dropoff_id + 1].update(x, y);
-                players[id].dropoffs[j] = dropoff_id;
+                players[id].dropoffs[j] = dropoffs + dropoff_id;
             }
         }
 
