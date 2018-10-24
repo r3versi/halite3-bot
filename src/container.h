@@ -8,7 +8,6 @@ struct Container {
     T items[N];
     
     Container() : _size(0) {}
-
     inline void clear() { _size = 0;}
     inline size_t size() {return _size;}
     inline void put(T item) { items[_size++] = item; }

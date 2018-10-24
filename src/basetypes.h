@@ -1,7 +1,7 @@
 #pragma once
 
-#include <container.h>
 #include <constants.h>
+#include <container.h>
 
 #include <cmath>
 #include <algorithm>
@@ -26,10 +26,9 @@ struct Point
 template <class T>
 class Grid
 {
-  private:
+  public:
     T **grid;
 
-  public:
     size_t width, height;
     Grid() : width(0), height(0) { grid = nullptr; }
     Grid(size_t width, size_t height) : width(width), height(height)
@@ -37,6 +36,13 @@ class Grid
         grid = (T **)calloc(width, sizeof(T *) * height);
         for (size_t i = 0; i < width; i++)
             grid[i] = (T *)calloc(height, sizeof(T));
+    }
+
+    Grid(const Grid<T>& g)
+    {
+        Grid(g.width, g.height);
+        
+        memcpy(grid, g.grid, sizeof(T)*width*height);
     }
 
     T &at(int x, int y) { return grid[x][y]; }
@@ -90,20 +96,27 @@ class Ship : public Entity
 {
   public:
     int halite;
-    bool inspired;
-    Ship() : Entity(), halite(0), inspired(false) {}
-    Ship(int id, int owner, int x, int y, int halite) : Entity(id, owner, x, y), halite(halite), inspired(false) {}
+    bool inspired, just_moved;
+    int action;
+    Ship() : Entity(), halite(0), inspired(false), just_moved(false), action(-1) {}
+    Ship(int id, int owner, int x, int y, int halite) : Entity(id, owner, x, y), halite(halite), inspired(false), just_moved(false), action(-1) {}
 
-    inline void update(int owner, int x, int y, int halite)
+    inline void update(int id, int owner, int x, int y, int halite)
     {
+        this->id = id;
+        this->owner = owner;
+        this->halite = halite;
+
+        pos = Point(x, y);
+        
         active = true;
         inspired = false;
-        this->owner = owner;
-        pos = Point(x, y);
-        this->halite = halite;
+
+        just_moved = false;
+        action = -1;
     }
 
-    inline friend std::ostream &operator<<(std::ostream &os, Ship &s) { return os << "S" << s.id << " " << s.owner << " " << s.pos << " " << s.halite; }
+    inline friend std::ostream &operator<<(std::ostream &os, Ship &s) { return os << "S={id: " << s.id << ", owner: " << s.owner << ", pos: " << s.pos << ", halite: " << s.halite << ", active: " << s.active << "}"; }
 };
 
 class Dropoff : public Entity
@@ -118,7 +131,7 @@ class Dropoff : public Entity
         pos = Point(x, y);
     }
 
-    inline friend std::ostream &operator<<(std::ostream &os, Dropoff &d) { return os << "D" << d.id << " " << d.owner << " " << d.pos; }
+    inline friend std::ostream &operator<<(std::ostream &os, Dropoff &d) { return os << "D={id: " << d.id << ", owner: " << d.owner << ", pos: " << d.pos << "}"; }
 };
 
 using PlayerShips = Container<MAX_SHIPS, Ship *>;
@@ -130,22 +143,25 @@ class Player
     size_t id, halite;
     Point spawn;
 
+    int action;
+
     PlayerShips ships;
     PlayerDropoffs dropoffs;
 
-    Player() : id(0), halite(0), spawn(0, 0), ships(), dropoffs() {}
-    Player(size_t id, int x, int y, Dropoff* shipyard) : id(id), halite(0), spawn(x, y)
+    Player() : id(0), halite(0), spawn(0, 0), action(0), ships(), dropoffs() {}
+    Player(size_t id, int x, int y, Dropoff *shipyard) : id(id), halite(0), spawn(x, y), action(0)
     {
         dropoffs.put(shipyard);
     }
 
     void update(size_t halite)
     {
+        this->action = 0;
         this->halite = halite;
         ships.clear();
     }
 
-    inline friend std::ostream &operator<<(std::ostream &os, Player& p) { return os << "P" << p.id << " " << p.halite << " " << p.spawn; }
+    inline friend std::ostream &operator<<(std::ostream &os, Player& p) { return os << "P={id: " << p.id << ", halite: " << p.halite << ", spawn: " << p.spawn << "}"; }
 };
 
 using Map = Grid<int>;
