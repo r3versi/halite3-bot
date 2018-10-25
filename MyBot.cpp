@@ -44,20 +44,10 @@ int main(int argc, char *argv[])
         cerr << "TURN " << game.turn
              << " @" << TURNTIME << " ms" << endl;
 
-        Solution best = solver.search(100.);
+        Solution best = solver.search(1800.);
 
         cerr << "Search terminated" 
              << " @" << TURNTIME << " ms" << endl;
-        /*
-        for (size_t i = 0; i < best.size(); i++)
-        {
-            for (size_t j = 0; j < 6; j++)
-            {
-                cerr << best[i][j] << " "; 
-            }
-            cerr << endl;
-        }
-        */
 
         for (size_t i = 0; i < best.size(); i++)
         {

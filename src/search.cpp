@@ -5,6 +5,77 @@
 
 #define NOW std::chrono::high_resolution_clock::now()
 #define TURNTIME std::chrono::duration_cast<std::chrono::microseconds>(NOW - start).count() / 1000.
+Solution GASearch::search(float time_limit)
+{
+    auto start = NOW;
+    if (engine->game->me->ships.size() == 0)
+        return get_rnd();
+        
+    for (size_t i = 0; i < pop_size; i++)
+    {
+        pop[i] = get_rnd();
+        pop[i]._score = evaluate(pop[i]);
+    }
+
+    sort();
+
+    while (TURNTIME < time_limit)
+    {
+
+        Solution &dad = pop[rnd(pop_size)];
+        Solution &mum = pop[rnd(pop_size)];
+
+        Solution child0, child1;
+        if (rnd(100) < 30)
+            cross(mum, dad, child0, child1);
+
+        if (rnd(100) < 15)
+            mutate(child0);
+
+        if (rnd(100) < 15)
+            mutate(child1);
+
+        child0._score = evaluate(child0);
+        child1._score = evaluate(child1);
+
+        int offset = 0;
+        if (child0._score > pop[0]._score)
+        {
+            offset = 1;
+            pop[0] = child0;
+        }
+        if (child1._score > pop[offset]._score)
+            pop[offset] = child1;
+
+        sort();
+    }
+    return pop[pop_size - 1];
+}
+
+void GASearch::mutate(Solution &sol)
+{
+    size_t ship_id = rnd(engine->game->me->ships.size());
+    size_t turn = rnd(depth);
+
+    sol[ship_id][turn] = rnd(5);
+}
+
+void GASearch::cross(Solution &mum, Solution &dad, Solution &child0, Solution &child1)
+{
+    // swap whole ship genome between mum and dad
+    size_t ship_id = rnd(engine->game->me->ships.size());
+
+    child0 = mum;
+    child1 = dad;
+
+    child0[ship_id] = dad[ship_id];
+    child1[ship_id] = mum[ship_id];
+}
+
+void GASearch::sort()
+{
+    std::sort(pop, pop + pop_size, [](Solution &a, Solution &b) { return a._score < b._score; });
+}
 
 Solution RandomSearch::search(float time_limit)
 {
