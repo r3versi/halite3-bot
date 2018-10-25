@@ -1,11 +1,12 @@
 #pragma once
 
-#include <game.h>
-#include <container.h>
-#include <time.h>
+#include <constants.h>
 #include <engine.h>
 
-static unsigned int seed = time(NULL); //time(NULL);
+using ShipSolution  = Container<MAX_DEPTH,          int >;
+using GroupSolution = Container<MAX_CLUSTER_SIZE,   ShipSolution >;
+
+static unsigned int seed = 42;
 inline int fastrand()
 {
     seed = (214013 * seed + 2531011);
@@ -13,81 +14,54 @@ inline int fastrand()
 }
 inline int rnd(int a) { return fastrand() % a; }
 
-const int MAX_MOVES = 5;
-const int moves[5] = {0, 1, 2, 3, 4};
-const char moves_str[5] = {'o','n','e','s','w'};
-const Point moves_dir[5] = {Point(0,0), Point(0, -1), Point(1, 0), Point(0, 1), Point(-1, 0)};
+struct Solution {
+    float _score;
+    GroupSolution data;
 
-
-class Clusterizer;
-class Generator;
-class Search;
-
-
-class RandomSearch {
-public:
-    size_t depth;
-    Generator generator;
-    Game* game;
-
-    RandomSearch(Game* game, size_t depth)
-    {
-        this->game = game;
-        this->depth = depth;
-
-        generator = Generator();
-    }
-
-    Solution search(int max_iter)
-    {
-        Solution best = generator.get_rnd();
-        float best_score = evaluate(best);
-
-        int i = 0;
-        while(i < max_iter)
-        {
-            Solution sol = generator.get_rnd();
-            float score = evaluate(sol);
-
-            if (score >= best_score)
-            {
-                best_score = score;
-                best = sol;
-            }
-        }
-
-        return best;
-    }
+    inline void clear() { data.clear(); }
+    inline size_t size() const { return data.size(); }
+    inline float score() { return _score; }
+    inline void put(ShipSolution item) { data.put(item); }
+    inline ShipSolution *begin() { return data.begin(); }
+    inline ShipSolution *end() { return data.end(); }
+    inline ShipSolution &operator[](size_t idx) { return data[idx]; }
+    inline const ShipSolution &operator[](size_t idx) const { return data[idx]; }
 };
 
-    float evaluate(Solution& sol)
-    {
-        float score = 0.;
-        game->save();
-        play(sol);
+class Search {
+public:
+    size_t depth;
+    Engine *engine;
 
-        score += game->me->halite;
-        
-        for(size_t i = 0; i < game->me->n_ships; i++)
-        {
-            Ship &my_ship = game->ships[game->me->ships[i]];
-            
-            if (!my_ship.active)
-            {
-                score += - 1000;
-                continue;
-            }
-            
-            if (my_ship.halite > 900)
-            {
-                // distance to dropoff
-                score -= game->grid->dist(my_ship, game->me->spawn);
-            }
+    Search(size_t depth, Engine *engine) : depth(depth), engine(engine) {}
 
-            score += .75 * my_ship.halite;
+    virtual Solution search(float time_limit) = 0;
+    Solution get_rnd();
 
-        }
-        
-        game->load();
+    void apply_actions(Solution &sol, int turn);
+    float evaluate(Solution &sol);
+};
 
-    }
+class GASearch : public Search {
+public:
+    size_t pop_size;
+    Solution* pop;
+
+    GASearch(size_t pop_size, size_t depth, Engine *engine) : Search(depth, engine), pop_size(pop_size) 
+    { pop = new Solution[pop_size]; }
+    ~GASearch() {delete[] pop;}
+    Solution search(float time_limit);
+
+    void sort();
+    void mutate(Solution& sol);
+    void cross(Solution& mum, Solution& dad, Solution& child0, Solution& child1);
+};
+
+
+class RandomSearch : public Search{
+public:
+
+    RandomSearch(size_t depth, Engine *engine) : Search(depth, engine) {}
+
+    Solution search(float time_limit);
+};

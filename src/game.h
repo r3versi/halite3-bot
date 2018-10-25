@@ -23,7 +23,7 @@ class Game
     Game();
 
     void init_input();
-    void turn_update(std::chrono::time_point<std::chrono::high_resolution_clock> start);
+    void turn_update();
 
     void load();
     void save();

@@ -1,6 +1,8 @@
 #include <bits/stdc++.h>
+
 #include <src/game.h>
 #include <src/engine.h>
+#include <src/search.h>
 
 using namespace std;
 using namespace std::chrono;
@@ -18,52 +20,111 @@ int main(int argc, char *argv[])
     else            rng_seed = static_cast<unsigned int>(time(nullptr));
     mt19937 rng(rng_seed);
     std::uniform_int_distribution<int> uid(1,4);
-    
-    Game game;
-    //Engine engine = Engine(&game);
 
+
+    Game game;
+    Engine engine = Engine(&game);
+    RandomSearch solver = RandomSearch(6, &engine);
+    //GASearch solver = GASearch(5, 6, &engine);
     game.init_input();
+
+    std::ofstream err_log("logs/"+to_string(game.my_id)+"_test_out.txt");
+    std::cerr.rdbuf(err_log.rdbuf());
+
     //game.dump();
 
     cout << "MyCrappyBotV1" << endl;
 
-    Player* me = game.me;
+    while(true)
+    {
+        game.turn_update();
+        game.save();
+        start = NOW;
+
+        cerr << "TURN " << game.turn
+             << " @" << TURNTIME << " ms" << endl;
+
+        Solution best = solver.search(100.);
+
+        cerr << "Search terminated" 
+             << " @" << TURNTIME << " ms" << endl;
+        /*
+        for (size_t i = 0; i < best.size(); i++)
+        {
+            for (size_t j = 0; j < 6; j++)
+            {
+                cerr << best[i][j] << " "; 
+            }
+            cerr << endl;
+        }
+        */
+
+        for (size_t i = 0; i < best.size(); i++)
+        {
+            cout << "m " << game.me->ships[i]->id << " " << moves_str[best[i][0]] << " ";
+
+            game.me->ships[i]->action = best[i][0];
+        }
+
+        engine.play_turn();
+
+        if (game.me->halite >= 1000 && game.me->ships.size() < 30)
+        {
+            bool free = true;
+            for(auto& ship : game.me->ships)
+            {
+                if (ship->pos == game.me->spawn)
+                {
+                    free = false;
+                    break;
+                }
+            }
+
+            if (free)            
+                cout << "g ";
+        }
+        game.load();
+        cout << " " << endl;
+    }
+
+    /*
+    Player *me = game.me;
+
     while (true)
     {
-        /*
         cerr << endl
              << endl
              << "Turn" << game.turn << "\n================================================" << endl
              << " @" << TURNTIME << " ms" << endl << flush;
-        */
+        
         game.turn_update(start);
         start = NOW;
-        /*
+        
         cerr << "game updated"
              << " @" << TURNTIME << " ms" << endl;
-        //game.save();
+        game.save();
         cerr << "game saved"
              << " @" << TURNTIME << " ms" << endl;
-        //game.dump();
+        game.dump();
         cerr << "game dumped"
              << " @" << TURNTIME << " ms" << endl;
-        */
-        if (me->halite >= 1000)
+        
+        if (me->halite >= 1000 && me->ships.size() < 30)
         {
-            /*
+        
             cerr << "P" << me->id << ": spawning ship"
                  << " @" << TURNTIME << " ms" << endl;
-            */
+        
             cout << "g ";
         }
-        /*
+        
         cerr << "spawn checked"
              << " @" << TURNTIME << " ms" << endl;
         
 
         cerr << "Starting ship commands" 
              << " @" << TURNTIME << " ms" << endl;
-        */
+        
         //int i = 0;
         for(auto& ship : me->ships)
         {
@@ -74,22 +135,28 @@ int main(int argc, char *argv[])
 
             int move = uid(rng);
             ship->action = move;
-            /*
+        
             cerr << "P" << me->id 
                  << " moving ship " << ship->id << " to " << moves_str[move] 
                  << " @" << TURNTIME << " ms" << endl;
-            */
+        
             // command to stdout
-            cout << "m " << ship->id << " " << moves_str[move] << " " << flush;
+            if (ship->halite > 300 || ship->halite == 0)
+            {
+                ship->action = 1;
+                cout << "m " << ship->id << " " << "n "; //moves_str[move] << " " << flush;
+            }
+            else
+            {
+                ship->action = 0;
+                cout << "m " << ship->id << " " << "o ";
+            }
         }
-        /*
+        
         cerr << "Ship commands issued"
              << " @" << TURNTIME << " ms" << endl;
-        */
-        // end line for commands
-        cout << endl;
-
-        /*engine.play_turn();
+        
+        engine.play_turn();
         game.dump(false);
 
         cerr << "Tiles updated during sim" << endl;
@@ -103,6 +170,9 @@ int main(int argc, char *argv[])
             }
         
         game.load();
-        */
+
+        // end line for commands
+        cout << endl;
     }
+    */
 }

@@ -17,6 +17,7 @@ public:
     void commit_moves();
     void mine();
     void collisions();
+    void drop_halite();
     
     inline bool can_move(Ship* ship);
     inline bool is_full(Ship* ship);

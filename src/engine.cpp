@@ -5,10 +5,11 @@
 
 void Engine::play_turn()
 {
-    inspire();
+    //inspire();
     commit_moves();
     mine();
     collisions();
+    drop_halite();
 }
 
 void Engine::inspire()
@@ -103,6 +104,29 @@ void Engine::collisions()
             }
         }
     }
+}
+
+void Engine::drop_halite()
+{
+    for(size_t i = 0; i < game->num_players; i++)
+    {
+        for(auto& ship : game->players[i].ships)
+        {
+            if (ship->halite == 0 || !ship->action)
+                continue;
+
+            for(auto& dropoff : game->players[i].dropoffs)
+            {
+                if (ship->pos == dropoff->pos)
+                {
+                    game->players[i].halite += ship->halite;
+                    ship->halite = 0;
+                    break;
+                }
+            }   
+        }
+    }
+    
 }
 
 void Engine::try_move(Ship *ship)

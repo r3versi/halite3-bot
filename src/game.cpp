@@ -40,24 +40,19 @@ void Game::init_input()
     }
 }
 
-void Game::turn_update(std::chrono::time_point<std::chrono::high_resolution_clock> start)
+void Game::turn_update()
 {
-    //std::cerr << "Init turn update " << TURNTIME << std::endl;
     // ./halite feeds 1 based turn, i like 0 based
     std::cin >> turn;
 
-    //std::cerr << "Read turn " << TURNTIME << std::endl;
     set_ships_dead();
-    //std::cerr << "ships set dead " << TURNTIME << std::endl;
-
+    
     for (size_t i = 0; i < num_players; i++)
     {
-        //std::cerr << "init player update " << TURNTIME << std::endl;
-
+    
         size_t id, n_ships, n_dropoffs, halite;
         std::cin >> id >> n_ships >> n_dropoffs >> halite;
-        //std::cerr << "read player " << TURNTIME << std::endl;
-
+    
         players[id].update(halite);
 
         for (size_t j = 0; j < n_ships; j++)
@@ -75,9 +70,8 @@ void Game::turn_update(std::chrono::time_point<std::chrono::high_resolution_cloc
             std::cin >> dropoff_id >> x >> y;
 
             dropoffs[dropoff_id + 1].update(x, y);
-            players[id].dropoffs[j] = dropoffs + dropoff_id;
+            players[id].dropoffs.put(dropoffs + dropoff_id + 1);
         }
-        //std::cerr << "updated ships & dropoffs " << TURNTIME << std::endl;
     }
 
     size_t tiles;
@@ -89,13 +83,11 @@ void Game::turn_update(std::chrono::time_point<std::chrono::high_resolution_cloc
         std::cin >> x >> y >> halite;
         grid.at(x, y) = halite;
     }
-    //std::cerr << "map updated, exiting " << TURNTIME << std::endl;
 }
 
 void Game::load()
 {
-    memcpy(&grid.grid[0][0], &cache_grid.grid[0][0], sizeof(cache_grid.grid[0][0]) * cache_grid.width * cache_grid.height);
-    //memcpy(grid.grid,   cache_grid.grid,    sizeof(int) * grid.width * grid.height);
+    grid = cache_grid;
     memcpy(players, cache_players, sizeof players);
     memcpy(ships, cache_ships, sizeof ships);
     memcpy(dropoffs, cache_dropoffs, sizeof dropoffs);
@@ -103,8 +95,7 @@ void Game::load()
 
 void Game::save()
 {
-    memcpy(&cache_grid.grid[0][0], &grid.grid[0][0], sizeof(grid.grid[0][0]) * grid.width * grid.height);
-    //memcpy(cache_grid.grid,     grid.grid,  sizeof(int) * grid.width * grid.height);
+    cache_grid = grid;
     memcpy(cache_players, players, sizeof players);
     memcpy(cache_ships, ships, sizeof ships);
     memcpy(cache_dropoffs, dropoffs, sizeof dropoffs);

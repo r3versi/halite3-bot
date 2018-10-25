@@ -3,6 +3,8 @@
 #include <constants.h>
 #include <container.h>
 
+#include <string>
+#include <memory>
 #include <cmath>
 #include <algorithm>
 #include <iostream>
@@ -22,7 +24,65 @@ struct Point
     inline friend std::istream &operator>>(std::istream &is, Point &p) { return is >> p.x >> p.y; }
     inline friend std::ostream &operator<<(std::ostream &os, Point &p) { return os << "(" << p.x << ", " << p.y << ")"; }
 };
+template <class T>
+class Grid
+{
+  public:
+    size_t width, height;
+    std::unique_ptr<T[]> data;
 
+    Grid() : width{0}, height{0} {}
+    Grid(size_t width, size_t height)
+        : width{width},
+          height{height},
+          data{std::make_unique<T[]>(width * height)} {}
+
+    Grid(const Grid<T> &other)
+        : Grid(other.width, other.height)
+    {
+        std::copy(other.data.get(), other.data.get() + width * height, data.get());
+    }
+
+    Grid<T> &operator=(const Grid<T> &other)
+    {
+        width = other.width;
+        height = other.height;
+        data = std::make_unique<T[]>(width * height);
+        std::copy(other.data.get(), other.data.get() + width * height, data.get());
+        return *this;
+    }
+
+    T &at(size_t x, size_t y) { return data[y * width + x]; }
+    T &at(const Point &p) { return at(p.x, p.y); }
+    T &operator[](const Point &p) { return at(p.x, p.y); }
+
+    inline void normalize(Point &p)
+    {
+        p.x = (p.x + width) % width;
+        p.y = (p.y + height) % height;
+    }
+
+    inline friend std::ostream &operator<<(std::ostream &os, Grid<T> &g)
+    {
+        for (size_t y = 0; y < g.height; y++)
+        {
+            for (size_t x = 0; x < g.width; x++)
+                os << g.at(x, y) << " ";
+            os << std::endl;
+        }
+        return os;
+    }
+
+    inline int dist(const Point &p, const Point &q)
+    {
+        int dx = std::abs(p.x - q.x);
+        int dy = std::abs(p.y - q.y);
+
+        return std::min(dx, (int)width - dx) + std::min(dy, (int)height - dy);
+    }
+};
+
+/*
 template <class T>
 class Grid
 {
@@ -31,6 +91,7 @@ class Grid
 
     size_t width, height;
     Grid() : width(0), height(0) { grid = nullptr; }
+
     Grid(size_t width, size_t height) : width(width), height(height)
     {
         grid = (T **)calloc(width, sizeof(T *) * height);
@@ -79,7 +140,7 @@ class Grid
         return std::min(dx, (int)width - dx) + std::min(dy, (int)height - dy);
     }
 };
-
+*/
 class Entity
 {
   public:
@@ -159,6 +220,10 @@ class Player
         this->action = 0;
         this->halite = halite;
         ships.clear();
+
+        Dropoff* shipyard = dropoffs[0];
+        dropoffs.clear();
+        dropoffs.put(shipyard);
     }
 
     inline friend std::ostream &operator<<(std::ostream &os, Player& p) { return os << "P={id: " << p.id << ", halite: " << p.halite << ", spawn: " << p.spawn << "}"; }
@@ -166,9 +231,3 @@ class Player
 
 using Map = Grid<int>;
 using Mask = Grid<bool>;
-
-
-using ShipCluster = Container<MAX_CLUSTER_SIZE, Ship *>;
-using ShipClusterMoves = Container<MAX_CLUSTER_SIZE, int>;
-
-using Solution = Container<MAX_DEPTH, ShipClusterMoves>;

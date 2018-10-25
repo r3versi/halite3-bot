@@ -3,7 +3,7 @@
 const unsigned long MAX_SHIPS = 500;
 const unsigned long MAX_DROPOFFS = 10;
 const unsigned long MAX_DEPTH = 10;
-const unsigned long MAX_CLUSTER_SIZE = 15;
+const unsigned long MAX_CLUSTER_SIZE = 30;
 
 const int MOVE_COST_RATIO = 10;
 const int FULL_SHIP = 900;
