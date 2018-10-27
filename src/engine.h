@@ -2,7 +2,6 @@
 
 #include <basetypes.h>
 #include <game.h>
-#include <actions.h>
 
 class Engine
 {
@@ -19,10 +18,10 @@ public:
     void collisions();
     void drop_halite();
     
-    inline bool can_move(Ship* ship);
-    inline bool is_full(Ship* ship);
+    bool can_move(Ship* ship);
+    bool is_full(Ship* ship);
 
-    inline void update_inspiration(Ship* ship);
-    inline void try_move(Ship *ship);
-    inline void mine(Ship *ship);
+    void update_inspiration(Ship* ship);
+    void try_move(Ship *ship);
+    void mine(Ship *ship);
 };

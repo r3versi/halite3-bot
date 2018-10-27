@@ -26,8 +26,11 @@ void Game::init_input()
     }
 
     std::cin >> map_width >> map_height;
+
     grid = Map(map_width, map_height);
     cache_grid = Map(map_width, map_height);
+    halite_nbhood = Grid<float>(map_width, map_height);
+
     size_t halite;
     for (size_t y = 0; y < map_height; y++)
     {
@@ -82,6 +85,30 @@ void Game::turn_update()
         int x, y, halite;
         std::cin >> x >> y >> halite;
         grid.at(x, y) = halite;
+    }
+
+    run_statistics();
+}
+
+void Game::run_statistics()
+{    
+    for(int x = 0; x < map_width; x++)
+    {
+        for(int y = 0; y < map_height; y++)
+        {   
+            Point p = Point(x,y);
+            halite_nbhood[p] = 0.;
+
+            for(int dx = -2; dx <= 2; dx++)
+            {
+                for(int dy = -2; dy <= 2; dy++)
+                {
+                    Point trgt = p + Point(dx,dy);
+                    grid.normalize(trgt);
+                    halite_nbhood[p] += grid[trgt];
+                }   
+            }
+        }
     }
 }
 

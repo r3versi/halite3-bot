@@ -20,10 +20,16 @@ class Game
     Player cache_players[4];
     Ship cache_ships[4 * MAX_SHIPS];
     Dropoff cache_dropoffs[4 * MAX_DROPOFFS];
+
+    // Statistics
+    Grid<float> halite_nbhood;
+
     Game();
 
     void init_input();
     void turn_update();
+
+    void run_statistics();
 
     void load();
     void save();

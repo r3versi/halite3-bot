@@ -4,6 +4,7 @@
 #include <container.h>
 
 #include <string>
+#include <cstring>
 #include <memory>
 #include <cmath>
 #include <algorithm>
@@ -24,6 +25,10 @@ struct Point
     inline friend std::istream &operator>>(std::istream &is, Point &p) { return is >> p.x >> p.y; }
     inline friend std::ostream &operator<<(std::ostream &os, Point &p) { return os << "(" << p.x << ", " << p.y << ")"; }
 };
+
+const char moves_str[5] = {'o', 'n', 'e', 's', 'w'};
+const Point moves_dir[5] = {Point(0, 0), Point(0, -1), Point(1, 0), Point(0, 1), Point(-1, 0)};
+
 template <class T>
 class Grid
 {
@@ -52,9 +57,15 @@ class Grid
         return *this;
     }
 
+    T &at(size_t idx) { return data[idx]; }
     T &at(size_t x, size_t y) { return data[y * width + x]; }
     T &at(const Point &p) { return at(p.x, p.y); }
     T &operator[](const Point &p) { return at(p.x, p.y); }
+
+    inline void reset()
+    {
+        data = std::make_unique<T[]>(width * height);
+    }
 
     inline void normalize(Point &p)
     {
@@ -82,65 +93,6 @@ class Grid
     }
 };
 
-/*
-template <class T>
-class Grid
-{
-  public:
-    T **grid;
-
-    size_t width, height;
-    Grid() : width(0), height(0) { grid = nullptr; }
-
-    Grid(size_t width, size_t height) : width(width), height(height)
-    {
-        grid = (T **)calloc(width, sizeof(T *) * height);
-        for (size_t i = 0; i < width; i++)
-            grid[i] = (T *)calloc(height, sizeof(T));
-    }
-
-    Grid(const Grid<T>& g)
-    {
-        Grid(g.width, g.height);
-        
-        memcpy(grid, g.grid, sizeof(T)*width*height);
-    }
-
-    T &at(int x, int y) { return grid[x][y]; }
-    const T &at(int x, int y) const { return grid[x][y]; }
-
-    T &at(const Point &p) { return grid[p.x][p.y]; }
-    const T &at(const Point &p) const { return grid[p.x][p.y]; }
-
-    T &operator[](const Point &p) { return grid[p.x][p.y]; }
-    const T &operator[](const Point &p) const { return grid[p.x][p.y]; }
-
-    inline void normalize(Point &p)
-    {
-        p.x = (p.x + width) % width;
-        p.y = (p.y + height) % height;
-    }
-
-    inline friend std::ostream &operator<<(std::ostream &os, Grid<T> &g)
-    {
-        for (size_t i = 0; i < g.height; i++)
-        {
-            for (size_t j = 0; j < g.width; j++)
-                os << g.at(i, j) << " ";
-            os << std::endl;
-        }
-        return os;
-    }
-
-    int dist(const Point& p, const Point& q) 
-    {
-        int dx = std::abs(p.x - q.x);
-        int dy = std::abs(p.y - q.y);
-
-        return std::min(dx, (int)width - dx) + std::min(dy, (int)height - dy);
-    }
-};
-*/
 class Entity
 {
   public:
@@ -158,9 +110,11 @@ class Ship : public Entity
   public:
     int halite;
     bool inspired, just_moved;
-    int action;
-    Ship() : Entity(), halite(0), inspired(false), just_moved(false), action(-1) {}
-    Ship(int id, int owner, int x, int y, int halite) : Entity(id, owner, x, y), halite(halite), inspired(false), just_moved(false), action(-1) {}
+    int action, task;
+    Point target;
+
+    Ship() : Entity(), halite(0), inspired(false), just_moved(false), action(-1), task(-1), target(-1, -1) {}
+    Ship(int id, int owner, int x, int y, int halite) : Entity(id, owner, x, y), halite(halite), inspired(false), just_moved(false), action(-1), task(-1), target(-1, -1) {}
 
     inline void update(int id, int owner, int x, int y, int halite)
     {
@@ -175,6 +129,15 @@ class Ship : public Entity
 
         just_moved = false;
         action = -1;
+    }
+    std::string get_command() 
+    {
+        if (action == -1)
+            return "m " + std::to_string(id) + " o ";
+        else if (action == 5) 
+            return "c " + std::to_string(id) + " ";
+        else
+            return "m " + std::to_string(id) + " " + moves_str[action] + " ";
     }
 
     inline friend std::ostream &operator<<(std::ostream &os, Ship &s) { return os << "S={id: " << s.id << ", owner: " << s.owner << ", pos: " << s.pos << ", halite: " << s.halite << ", active: " << s.active << "}"; }

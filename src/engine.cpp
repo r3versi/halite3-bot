@@ -154,18 +154,18 @@ void Engine::try_move(Ship *ship)
     }
 }
 
-inline bool Engine::can_move(Ship *ship)
+bool Engine::can_move(Ship *ship)
 {
     return ship->halite >= game->grid[ship->pos] / MOVE_COST_RATIO;
 }
 
-inline bool Engine::is_full(Ship *ship)
+bool Engine::is_full(Ship *ship)
 {
     return ship->halite >= FULL_SHIP;
 }
 
 // assume ship didnt move
-inline void Engine::mine(Ship *ship)
+void Engine::mine(Ship *ship)
 {
     int extracted = std::ceil(game->grid[ship->pos] / (float)EXTRACTION_RATIO);
     int gained = extracted;
@@ -186,7 +186,7 @@ inline void Engine::mine(Ship *ship)
     game->grid[ship->pos] -= extracted;
 }
 
-inline void Engine::update_inspiration(Ship *ship)
+void Engine::update_inspiration(Ship *ship)
 {
     int count = 0;
     for (size_t i = 0; i < game->num_players; i++)

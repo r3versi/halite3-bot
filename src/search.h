@@ -65,3 +65,37 @@ public:
 
     Solution search(float time_limit);
 };
+
+const int NONE = -1;
+const int DELIVER = 0;
+const int GOTO = 1;
+const int MINE = 2;
+
+class DirectSearch : public Search {
+public:
+    Grid<Ship *> ship_on_tile[2];
+
+    DirectSearch(size_t depth, Engine* engine) : Search(depth, engine) 
+    {
+        ship_on_tile[0] = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
+        ship_on_tile[1] = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
+    }
+
+    Solution search(float time_limit);
+
+    std::string get_commands();
+
+    void assign_tasks();
+    void navigate();
+
+    void find_target(Ship& ship);
+    
+    bool move_ship(Ship* ship);
+
+    Point find_deliver_site(Ship* ship);
+    Point find_mining_site(Ship* ship);
+
+    bool  next_turn_free(Point &p);
+    Ship* next_turn(Point &p);
+    bool  move_ship_dir(Ship *ship, int dir);
+};

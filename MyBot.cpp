@@ -24,9 +24,11 @@ int main(int argc, char *argv[])
 
     Game game;
     Engine engine = Engine(&game);
-    RandomSearch solver = RandomSearch(6, &engine);
-    //GASearch solver = GASearch(5, 6, &engine);
     game.init_input();
+
+    //RandomSearch solver = RandomSearch(6, &engine);
+    //GASearch solver = GASearch(5, 6, &engine);
+    DirectSearch solver = DirectSearch(0, &engine);
 
     std::ofstream err_log("logs/"+to_string(game.my_id)+"_test_out.txt");
     std::cerr.rdbuf(err_log.rdbuf());
@@ -34,7 +36,25 @@ int main(int argc, char *argv[])
     //game.dump();
 
     cout << "MyCrappyBotV1" << endl;
+    while (true)
+    {
+        game.turn_update();
+        game.save();
+        start = NOW;
 
+        cerr << endl
+             << "TURN " << game.turn
+             << " @" << TURNTIME << " ms" << endl;
+
+        solver.search(1000.);
+
+        cerr << "Search terminated"
+             << " @" << TURNTIME << " ms" << endl;
+
+        cerr << "Commands string= \" " << solver.get_commands() << endl;
+        cout << solver.get_commands() << endl;
+    }
+        /*
     while(true)
     {
         game.turn_update();
@@ -44,7 +64,8 @@ int main(int argc, char *argv[])
         cerr << "TURN " << game.turn
              << " @" << TURNTIME << " ms" << endl;
 
-        Solution best = solver.search(1800.);
+        
+        Solution best = solver.search(100.);
 
         cerr << "Search terminated" 
              << " @" << TURNTIME << " ms" << endl;
@@ -76,8 +97,8 @@ int main(int argc, char *argv[])
         game.load();
         cout << " " << endl;
     }
-
-    /*
+    */
+        /*
     Player *me = game.me;
 
     while (true)

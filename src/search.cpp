@@ -10,7 +10,7 @@ Solution GASearch::search(float time_limit)
     auto start = NOW;
     if (engine->game->me->ships.size() == 0)
         return get_rnd();
-        
+
     for (size_t i = 0; i < pop_size; i++)
     {
         pop[i] = get_rnd();
@@ -48,6 +48,7 @@ Solution GASearch::search(float time_limit)
             pop[offset] = child1;
 
         sort();
+        pop[0] = get_rnd();
     }
     return pop[pop_size - 1];
 }
@@ -167,4 +168,227 @@ float Search::evaluate(Solution &sol)
 
     game->load();
     return score;
+}
+
+
+Solution DirectSearch::search(float time_limit)
+{
+    ship_on_tile[0].reset();
+    ship_on_tile[1].reset();
+
+    assign_tasks();
+    navigate();
+
+    if (engine->game->me->halite >= 1000 && 
+        engine->game->me->ships.size() < 30 &&
+        ship_on_tile[1][engine->game->me->spawn] == nullptr)
+        engine->game->me->action = true;
+    else
+    {
+        std::cerr << "Cannot spawn new ship: "
+                  << ship_on_tile[1][engine->game->me->spawn] << "on tile" << std::endl
+                  << engine->game->me->halite << " halite" << std::endl
+                  << engine->game->me->ships.size() << " ships" << std::endl;
+
+        engine->game->me->action = false;
+    }
+    return Solution();
+}
+
+std::string DirectSearch::get_commands()
+{
+    std::string commands = "";
+    
+    if (engine->game->me->action)
+    {
+        commands += "g ";
+    }
+
+    for(auto& ship : engine->game->me->ships)
+    {
+        commands += ship->get_command();
+    }
+
+    return commands;
+    
+}
+
+Point DirectSearch::find_deliver_site(Ship *ship)
+{
+    /*
+    int min_dist = 100;
+    for(auto& dropoff : engine->game->me->dropoffs)
+    {
+        int dist = engine->game->grid.dist(ship->pos, dropoff->pos);
+        if (dist < min_dist)
+            ship->target = dropoff->pos;
+    }
+    */
+    return engine->game->me->spawn;
+}
+
+Point DirectSearch::find_mining_site(Ship *ship)
+{
+    //Point dir = ship->pos - engine->game->me->spawn;
+    Point neighbours[5];
+    for(auto i : {0,1,2,3,4})
+    {
+        neighbours[i] = ship->pos + moves_dir[i];
+        engine->game->grid.normalize(neighbours[i]);
+    }
+
+    std::sort(std::begin(neighbours), std::end(neighbours),
+              [this](Point &a, Point &b) {
+                  return engine->game->grid[a] > engine->game->grid[b];
+              });
+
+    return neighbours[0];
+}
+
+void DirectSearch::assign_tasks()
+{
+
+    for (auto &ship : engine->game->me->ships)
+    {
+        if (!ship->active)
+            continue;
+
+        std::cerr << *ship;
+
+        if (ship->halite >= 900 || (ship->task == DELIVER && ship->halite > 0))
+        {
+            ship->task = DELIVER;
+            ship->target = find_deliver_site(ship);
+        }
+        else if (engine->game->halite_nbhood[ship->pos] >= 6250)
+        {
+            ship->task = MINE;
+            if (engine->game->grid[ship->pos] > 200)
+                ship->target = ship->pos;
+            else
+                ship->target = find_mining_site(ship);
+        }
+        else
+        {
+            ship->task = GOTO;
+            ship->target = find_mining_site(ship);
+        }
+
+        std::cerr << "{Task: " << ship->task << ", Target " << ship->target << "}" << std::endl;
+    }
+}
+
+void DirectSearch::navigate()
+{
+    std::sort(engine->game->me->ships.begin(), engine->game->me->ships.end(),
+              [](Ship *a, Ship *b) {
+                  if (a->task != b->task)
+                      return a->task < b->task;
+
+                  return a->halite > b->halite;
+              });
+
+    for (auto &ship : engine->game->me->ships)
+    {
+        if (!ship->active)
+            continue;
+
+        ship_on_tile[0][ship->pos] = ship;
+        if (!engine->can_move(ship))
+        {
+            ship_on_tile[1][ship->pos] = ship;
+            ship->action = 0;
+            ship->just_moved = true;
+            continue;
+        }
+
+        ship->just_moved = false;
+    }
+
+    for (auto &ship : engine->game->me->ships)
+    {
+        if (ship->just_moved || !ship->active)
+            continue;
+
+        if (move_ship(ship))
+            std::cerr << "SUCCESS " << ship->id << " to " << moves_str[ship->action] << std::endl;
+        else
+            std::cerr << "FAIL " << ship->id << std::endl;
+    }
+}
+
+bool DirectSearch::next_turn_free(Point &p)
+{
+    return (ship_on_tile[1][p] == nullptr);
+}
+
+Ship *DirectSearch::next_turn(Point &p)
+{
+    return ship_on_tile[1][p];
+}
+
+bool DirectSearch::move_ship_dir(Ship *ship, int dir)
+{
+    Point n = ship->pos + moves_dir[dir];
+    Ship *other_ship = next_turn(n);
+    if (other_ship == nullptr)
+    {
+        ship_on_tile[1][n] = ship;
+        ship->just_moved = true;
+        ship->action = dir;
+        return true;
+    }
+    return false;
+}
+
+// returns true if found successful move (i.e. no collision)
+bool DirectSearch::move_ship(Ship *ship)
+{
+    if (engine->can_move(ship))
+    {
+        Point dir = (ship->target - ship->pos);
+
+        if (dir.x < 0)
+        {
+            if (move_ship_dir(ship, 4))
+                return true;
+        }
+        else if (dir.x > 0)
+        {
+            // e
+            if (move_ship_dir(ship, 2))
+                return true;
+        }
+
+        if (dir.y < 0)
+        {
+            //n
+            if (move_ship_dir(ship, 1))
+                return true;
+        }
+        else if (dir.y > 0)
+        {
+            //s
+            if (move_ship_dir(ship, 3))
+                return true;
+        }
+
+        if (move_ship_dir(ship, 0))
+            return true;
+
+        // try other directions
+        for (auto &i : {1, 2, 3, 4})
+        {
+            if (move_ship_dir(ship, i))
+                return true;
+        }
+    }
+    else
+    {
+        // can stay still?
+        if (move_ship_dir(ship, 0))
+            return true;
+    }
+
+    return false;
 }
