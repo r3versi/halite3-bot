@@ -173,6 +173,7 @@ float Search::evaluate(Solution &sol)
 
 Solution DirectSearch::search(float time_limit)
 {
+    std::cerr << "Time limit " << time_limit << std::endl;
     ship_on_tile[0].reset();
     ship_on_tile[1].reset();
 
@@ -181,8 +182,12 @@ Solution DirectSearch::search(float time_limit)
 
     if (engine->game->me->halite >= 1000 && 
         engine->game->me->ships.size() < 30 &&
-        ship_on_tile[1][engine->game->me->spawn] == nullptr)
+        ship_on_tile[1][engine->game->me->spawn] == nullptr &&
+        engine->game->max_turn - engine->game->turn > 100
+        )
+    {
         engine->game->me->action = true;
+    }
     else
     {
         std::cerr << "Cannot spawn new ship: "
@@ -200,17 +205,12 @@ std::string DirectSearch::get_commands()
     std::string commands = "";
     
     if (engine->game->me->action)
-    {
         commands += "g ";
-    }
 
     for(auto& ship : engine->game->me->ships)
-    {
         commands += ship->get_command();
-    }
 
     return commands;
-    
 }
 
 Point DirectSearch::find_deliver_site(Ship *ship)
@@ -224,6 +224,9 @@ Point DirectSearch::find_deliver_site(Ship *ship)
             ship->target = dropoff->pos;
     }
     */
+    if (!ship->active)
+        std::cerr << "Ship not active!" << std::endl;
+
     return engine->game->me->spawn;
 }
 
@@ -243,6 +246,29 @@ Point DirectSearch::find_mining_site(Ship *ship)
               });
 
     return neighbours[0];
+    /*
+    if (engine->game->grid[ship->pos] > 10 && engine->game->grid[ship->pos] / EXTRACTION_RATIO >= engine->game->grid[ship->pos] / MOVE_COST_RATIO)
+        return ship->pos;
+
+    float best_score = 0.;
+    Point best;
+
+    for(int dx = -4; dx <= 4; dx++)
+    {
+        for (int dy = 4; dy <= 4; dy++)
+        {
+            Point p = ship->pos + Point(dx,dy);
+            engine->game->grid.normalize(p);
+
+            float score = static_cast<float>(engine->game->grid[p]) / (1 + engine->game->grid.dist(ship->pos, p) + engine->game->dist_to_dropoff[p] + engine->game->turns_to_collect[p]);
+            if (score > best_score)
+            {
+                best_score = score;
+                best = p;
+            }
+        }
+    }
+    return best;*/
 }
 
 void DirectSearch::assign_tasks()
@@ -330,6 +356,7 @@ Ship *DirectSearch::next_turn(Point &p)
 bool DirectSearch::move_ship_dir(Ship *ship, int dir)
 {
     Point n = ship->pos + moves_dir[dir];
+    engine->game->grid.normalize(n);
     Ship *other_ship = next_turn(n);
     if (other_ship == nullptr)
     {
@@ -344,6 +371,12 @@ bool DirectSearch::move_ship_dir(Ship *ship, int dir)
 // returns true if found successful move (i.e. no collision)
 bool DirectSearch::move_ship(Ship *ship)
 {
+    if (ship->target == ship->pos)
+    {
+        if (move_ship_dir(ship, 0))
+            return true;
+    }
+
     if (engine->can_move(ship))
     {
         Point dir = (ship->target - ship->pos);
@@ -373,11 +406,8 @@ bool DirectSearch::move_ship(Ship *ship)
                 return true;
         }
 
-        if (move_ship_dir(ship, 0))
-            return true;
-
         // try other directions
-        for (auto &i : {1, 2, 3, 4})
+        for (auto &i : {1, 2, 3, 4, 0})
         {
             if (move_ship_dir(ship, i))
                 return true;

@@ -3,6 +3,7 @@
 #include <string.h> // memcpy
 #include <string>   // string
 #include <iostream> // std::cin, cout, cerr, endl
+#include <cmath>
 
 #define NOW std::chrono::high_resolution_clock::now()
 #define TURNTIME std::chrono::duration_cast<std::chrono::microseconds>(NOW - start).count() / 1000.
@@ -27,9 +28,14 @@ void Game::init_input()
 
     std::cin >> map_width >> map_height;
 
+    max_turn = 400 + static_cast<size_t>(100.f / 32.f * (static_cast<float>(map_width) - 32.f));
+
     grid = Map(map_width, map_height);
     cache_grid = Map(map_width, map_height);
+
     halite_nbhood = Grid<float>(map_width, map_height);
+    turns_to_collect = Grid<float>(map_width, map_height);
+    dist_to_dropoff = Grid<int>(map_width, map_height);
 
     size_t halite;
     for (size_t y = 0; y < map_height; y++)
@@ -92,11 +98,12 @@ void Game::turn_update()
 
 void Game::run_statistics()
 {    
-    for(int x = 0; x < map_width; x++)
+    for(size_t x = 0; x < map_width; x++)
     {
-        for(int y = 0; y < map_height; y++)
+        for(size_t y = 0; y < map_height; y++)
         {   
             Point p = Point(x,y);
+            // Neighbourhood
             halite_nbhood[p] = 0.;
 
             for(int dx = -2; dx <= 2; dx++)
@@ -108,6 +115,9 @@ void Game::run_statistics()
                     halite_nbhood[p] += grid[trgt];
                 }   
             }
+
+            dist_to_dropoff[p] = grid.dist(p, me->spawn);
+            turns_to_collect[p] = static_cast<int>(.5f + log(200.f / std::max(200, grid[p])) / log(.75f));
         }
     }
 }

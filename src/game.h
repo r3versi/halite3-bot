@@ -8,7 +8,7 @@ class Game
 {
   public:
     size_t my_id, num_players, map_width, map_height, turn;
-
+    size_t max_turn;
     Player* me;
 
     Map grid;
@@ -22,7 +22,8 @@ class Game
     Dropoff cache_dropoffs[4 * MAX_DROPOFFS];
 
     // Statistics
-    Grid<float> halite_nbhood;
+    Grid<float> halite_nbhood, turns_to_collect;
+    Grid<int> dist_to_dropoff;
 
     Game();
 
