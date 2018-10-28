@@ -74,11 +74,12 @@ const int MINE = 2;
 class DirectSearch : public Search {
 public:
     Grid<Ship *> ship_on_tile[2];
-
+    Grid<Ship *> targeted;
     DirectSearch(size_t depth, Engine* engine) : Search(depth, engine) 
     {
         ship_on_tile[0] = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
         ship_on_tile[1] = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
+        targeted = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
     }
 
     Solution search(float time_limit);
@@ -94,8 +95,9 @@ public:
 
     Point find_deliver_site(Ship* ship);
     Point find_mining_site(Ship* ship);
+    Point find_mining_zone(Ship *ship);
 
-    bool  next_turn_free(Point &p);
+        bool next_turn_free(Point &p);
     Ship* next_turn(Point &p);
     bool  move_ship_dir(Ship *ship, int dir);
 };

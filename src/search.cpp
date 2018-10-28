@@ -176,6 +176,7 @@ Solution DirectSearch::search(float time_limit)
     std::cerr << "Time limit " << time_limit << std::endl;
     ship_on_tile[0].reset();
     ship_on_tile[1].reset();
+    targeted.reset();
 
     assign_tasks();
     navigate();
@@ -232,6 +233,47 @@ Point DirectSearch::find_deliver_site(Ship *ship)
 
 Point DirectSearch::find_mining_site(Ship *ship)
 {
+    float best_score = 0.;
+    Point best = ship->pos;
+    std::cerr << *ship << std::endl;
+    int radius = 4;
+    for(int dy = -radius; dy <= radius; dy++)
+    {
+        for (int dx = -radius; dx <= radius; dx++)
+        {
+            Point p = ship->pos + Point(dx, dy);
+            engine->game->grid.normalize(p);
+            int mining_turns = std::max(0, 2*radius - engine->game->grid.dist(ship->pos, p));
+            float score = static_cast<float>(engine->game->grid[p]) / 4.f
+            * (1.f - std::pow(.75f, mining_turns)) / .25f;
+
+            score /= 1. + engine->game->grid.dist(ship->pos, p);
+            if (score > best_score)
+            {
+                best_score = score;
+                best = p;
+            }
+            std::cerr << p << " " << (int)score << "\t";
+        }
+        std::cerr << std::endl;
+    }
+    /*
+    Ship *other = targeted[best];
+    if (other != nullptr) 
+    {
+        if (engine->game->grid.dist(other->pos, best) > engine->game->grid.dist(ship->pos, best))
+        {
+            targeted[best] = ship;
+            other->target = find_mining_site(other);
+        }      
+    }
+    */
+    targeted[best] = ship;
+    return best;
+}
+
+Point DirectSearch::find_mining_zone(Ship *ship)
+{
     //Point dir = ship->pos - engine->game->me->spawn;
     Point neighbours[5];
     for(auto i : {0,1,2,3,4})
@@ -246,34 +288,10 @@ Point DirectSearch::find_mining_site(Ship *ship)
               });
 
     return neighbours[0];
-    /*
-    if (engine->game->grid[ship->pos] > 10 && engine->game->grid[ship->pos] / EXTRACTION_RATIO >= engine->game->grid[ship->pos] / MOVE_COST_RATIO)
-        return ship->pos;
-
-    float best_score = 0.;
-    Point best;
-
-    for(int dx = -4; dx <= 4; dx++)
-    {
-        for (int dy = 4; dy <= 4; dy++)
-        {
-            Point p = ship->pos + Point(dx,dy);
-            engine->game->grid.normalize(p);
-
-            float score = static_cast<float>(engine->game->grid[p]) / (1 + engine->game->grid.dist(ship->pos, p) + engine->game->dist_to_dropoff[p] + engine->game->turns_to_collect[p]);
-            if (score > best_score)
-            {
-                best_score = score;
-                best = p;
-            }
-        }
-    }
-    return best;*/
 }
 
 void DirectSearch::assign_tasks()
 {
-
     for (auto &ship : engine->game->me->ships)
     {
         if (!ship->active)
@@ -286,18 +304,18 @@ void DirectSearch::assign_tasks()
             ship->task = DELIVER;
             ship->target = find_deliver_site(ship);
         }
+        /*
         else if (engine->game->halite_nbhood[ship->pos] >= 6250)
         {
             ship->task = MINE;
-            if (engine->game->grid[ship->pos] > 200)
-                ship->target = ship->pos;
-            else
-                ship->target = find_mining_site(ship);
+            ship->target = find_mining_site(ship);
         }
+        */
         else
         {
             ship->task = GOTO;
             ship->target = find_mining_site(ship);
+            targeted[ship->target] = ship;
         }
 
         std::cerr << "{Task: " << ship->task << ", Target " << ship->target << "}" << std::endl;
@@ -320,7 +338,7 @@ void DirectSearch::navigate()
             continue;
 
         ship_on_tile[0][ship->pos] = ship;
-        if (!engine->can_move(ship))
+        if (!engine->can_move(ship) || ship->target == ship->pos)
         {
             ship_on_tile[1][ship->pos] = ship;
             ship->action = 0;
@@ -379,8 +397,32 @@ bool DirectSearch::move_ship(Ship *ship)
 
     if (engine->can_move(ship))
     {
-        Point dir = (ship->target - ship->pos);
+        //std::cerr<< *ship << " wants to go to " << ship->target << " from " << ship->pos << std::endl;
+        int dirs[5] = {0, 1, 2 , 3, 4};
 
+        std::sort(std::begin(dirs), std::end(dirs), [this, ship](int &a, int &b) {
+            Point na = ship->pos + moves_dir[a], nb = ship->pos + moves_dir[b];
+            engine->game->grid.normalize(na);
+            engine->game->grid.normalize(nb);
+            return engine->game->grid.dist(ship->target, na) < engine->game->grid.dist(ship->target, nb);
+        });
+
+        for (auto i : dirs)
+        {
+            if (move_ship_dir(ship, i))
+                return true;
+        }
+        
+        return false;
+        /*
+        Point dir0 = ship->target - ship->pos, dir1 = -dir0;
+        std::cerr << dir0 << " " << dir1 << std::endl;
+        engine->game->grid.normalize(dir0);
+        engine->game->grid.normalize(dir1);
+        std::cerr << dir0 << " " << dir1 << std::endl;
+        std::cerr << dir0.length() << " " << dir1.length() << std::endl;
+        Point dir = dir0.length() <= dir1.length() ? ship->target - ship->pos : ship->pos - ship->target;
+        
         if (dir.x < 0)
         {
             if (move_ship_dir(ship, 4))
@@ -412,6 +454,7 @@ bool DirectSearch::move_ship(Ship *ship)
             if (move_ship_dir(ship, i))
                 return true;
         }
+        */
     }
     else
     {

@@ -20,8 +20,8 @@ struct Point
     inline bool operator!=(const Point &a) const { return !(*this == a); }
     inline Point operator+(const Point &a) const { return Point(x + a.x, y + a.y); }
     inline Point operator-(const Point &a) const { return Point(x - a.x, y - a.y); }
-    //Point operator-() const { return Point(-x, -y);}
-
+    inline Point operator-() const { return Point(-x, -y);}
+    inline int length() const {return x+y;}
     inline friend std::istream &operator>>(std::istream &is, Point &p) { return is >> p.x >> p.y; }
     inline friend std::ostream &operator<<(std::ostream &os, Point &p) { return os << "(" << p.x << ", " << p.y << ")"; }
 };
