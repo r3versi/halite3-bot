@@ -73,6 +73,8 @@ const int MINE = 2;
 
 class DirectSearch : public Search {
 public:
+
+    bool endgame;
     Grid<Ship *> ship_on_tile[2];
     Grid<Ship *> targeted;
     DirectSearch(size_t depth, Engine* engine) : Search(depth, engine) 
@@ -80,6 +82,7 @@ public:
         ship_on_tile[0] = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
         ship_on_tile[1] = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
         targeted = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
+        endgame = false;
     }
 
     Solution search(float time_limit);

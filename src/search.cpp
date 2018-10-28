@@ -292,17 +292,24 @@ Point DirectSearch::find_mining_zone(Ship *ship)
 
 void DirectSearch::assign_tasks()
 {
+    int remaining_turns = engine->game->max_turn - engine->game->turn;
+    endgame = remaining_turns < (int)engine->game->map_width;
+
     for (auto &ship : engine->game->me->ships)
     {
         if (!ship->active)
             continue;
 
         std::cerr << *ship;
+        Point deliver_site = find_deliver_site(ship);
 
-        if (ship->halite >= 900 || (ship->task == DELIVER && ship->halite > 0))
+        if (ship->halite >= 900 
+            || (ship->task == DELIVER && ship->halite > 0) 
+            || (endgame && engine->game->grid.dist(ship->pos, deliver_site) >= remaining_turns-5)
+            )
         {
             ship->task = DELIVER;
-            ship->target = find_deliver_site(ship);
+            ship->target = deliver_site;
         }
         /*
         else if (engine->game->halite_nbhood[ship->pos] >= 6250)
@@ -355,7 +362,11 @@ void DirectSearch::navigate()
             continue;
 
         if (move_ship(ship))
+        {
+            if (endgame)
+                ship_on_tile[1][engine->game->me->spawn] = nullptr;
             std::cerr << "SUCCESS " << ship->id << " to " << moves_str[ship->action] << std::endl;
+        }
         else
             std::cerr << "FAIL " << ship->id << std::endl;
     }
@@ -389,6 +400,7 @@ bool DirectSearch::move_ship_dir(Ship *ship, int dir)
 // returns true if found successful move (i.e. no collision)
 bool DirectSearch::move_ship(Ship *ship)
 {
+    
     if (ship->target == ship->pos)
     {
         if (move_ship_dir(ship, 0))
