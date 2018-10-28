@@ -97,7 +97,7 @@ public:
     bool move_ship(Ship* ship);
 
     Point find_deliver_site(Ship* ship);
-    Point find_mining_site(Ship* ship);
+    Point find_mining_site(Ship* ship, bool first = true);
     Point find_mining_zone(Ship *ship);
 
         bool next_turn_free(Point &p);

@@ -214,6 +214,43 @@ std::string DirectSearch::get_commands()
     return commands;
 }
 
+void DirectSearch::assign_tasks()
+{
+    int remaining_turns = engine->game->max_turn - engine->game->turn;
+    endgame = remaining_turns < (int)engine->game->map_width;
+
+    for (auto &ship : engine->game->me->ships)
+    {
+        if (!ship->active)
+            continue;
+
+        Point deliver_site = find_deliver_site(ship);
+
+        if (ship->halite >= 900 || (ship->task == DELIVER && ship->halite > 0) || (endgame && engine->game->grid.dist(ship->pos, deliver_site) >= remaining_turns - 5))
+        {
+            ship->task = DELIVER;
+            ship->target = deliver_site;
+        }
+        else
+        {
+            ship->task = GOTO;
+            ship->target = find_mining_site(ship, true);
+        }
+
+        std::cerr << *ship << " {Task: " << ship->task << ", Target " << ship->target << "}" << std::endl;
+    }
+
+    std::cerr << "RECOMPUTE TASKS" << std::endl;
+    for (auto &ship : engine->game->me->ships)
+    {
+        if (!ship->active || ship->task != GOTO)
+            continue;
+        
+        ship->target = find_mining_site(ship, false);
+        std::cerr << *ship << " {Task: " << ship->task << ", Target " << ship->target << "}" << std::endl;
+    }
+}
+
 Point DirectSearch::find_deliver_site(Ship *ship)
 {
     /*
@@ -231,11 +268,11 @@ Point DirectSearch::find_deliver_site(Ship *ship)
     return engine->game->me->spawn;
 }
 
-Point DirectSearch::find_mining_site(Ship *ship)
+Point DirectSearch::find_mining_site(Ship *ship, bool first)
 {
     float best_score = 0.;
     Point best = ship->pos;
-    std::cerr << *ship << std::endl;
+    //std::cerr << *ship << std::endl;
     int radius = 4;
     for(int dy = -radius; dy <= radius; dy++)
     {
@@ -243,7 +280,11 @@ Point DirectSearch::find_mining_site(Ship *ship)
         {
             Point p = ship->pos + Point(dx, dy);
             engine->game->grid.normalize(p);
-            int mining_turns = std::max(0, 2*radius - engine->game->grid.dist(ship->pos, p));
+
+            if (!first && targeted[p] != nullptr && targeted[p] != ship)
+                continue;
+
+            int mining_turns = std::max(0, 2 * radius - engine->game->grid.dist(ship->pos, p));
             float score = static_cast<float>(engine->game->grid[p]) / 4.f
             * (1.f - std::pow(.75f, mining_turns)) / .25f;
 
@@ -253,22 +294,23 @@ Point DirectSearch::find_mining_site(Ship *ship)
                 best_score = score;
                 best = p;
             }
-            std::cerr << p << " " << (int)score << "\t";
+            //std::cerr << p << " " << (int)score << "\t";
         }
-        std::cerr << std::endl;
+        //std::cerr << std::endl;
     }
-    /*
-    Ship *other = targeted[best];
-    if (other != nullptr) 
+    
+    if (first)
     {
-        if (engine->game->grid.dist(other->pos, best) > engine->game->grid.dist(ship->pos, best))
+        Ship *other = targeted[best];
+        if (other != nullptr) 
         {
+            if (engine->game->grid.dist(ship->pos, best) < engine->game->grid.dist(other->pos, best))
+                targeted[best] = ship;
+        }
+        else
             targeted[best] = ship;
-            other->target = find_mining_site(other);
-        }      
     }
-    */
-    targeted[best] = ship;
+
     return best;
 }
 
@@ -290,44 +332,6 @@ Point DirectSearch::find_mining_zone(Ship *ship)
     return neighbours[0];
 }
 
-void DirectSearch::assign_tasks()
-{
-    int remaining_turns = engine->game->max_turn - engine->game->turn;
-    endgame = remaining_turns < (int)engine->game->map_width;
-
-    for (auto &ship : engine->game->me->ships)
-    {
-        if (!ship->active)
-            continue;
-
-        std::cerr << *ship;
-        Point deliver_site = find_deliver_site(ship);
-
-        if (ship->halite >= 900 
-            || (ship->task == DELIVER && ship->halite > 0) 
-            || (endgame && engine->game->grid.dist(ship->pos, deliver_site) >= remaining_turns-5)
-            )
-        {
-            ship->task = DELIVER;
-            ship->target = deliver_site;
-        }
-        /*
-        else if (engine->game->halite_nbhood[ship->pos] >= 6250)
-        {
-            ship->task = MINE;
-            ship->target = find_mining_site(ship);
-        }
-        */
-        else
-        {
-            ship->task = GOTO;
-            ship->target = find_mining_site(ship);
-            targeted[ship->target] = ship;
-        }
-
-        std::cerr << "{Task: " << ship->task << ", Target " << ship->target << "}" << std::endl;
-    }
-}
 
 void DirectSearch::navigate()
 {
