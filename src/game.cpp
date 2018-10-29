@@ -36,6 +36,7 @@ void Game::init_input()
     halite_nbhood = Grid<float>(map_width, map_height);
     turns_to_collect = Grid<float>(map_width, map_height);
     dist_to_dropoff = Grid<int>(map_width, map_height);
+    nearest_dropoff = Grid<Dropoff*>(map_width, map_height);
 
     size_t halite;
     for (size_t y = 0; y < map_height; y++)
@@ -78,8 +79,8 @@ void Game::turn_update()
             int dropoff_id, x, y;
             std::cin >> dropoff_id >> x >> y;
 
-            dropoffs[dropoff_id + 1].update(x, y);
-            players[id].dropoffs.put(dropoffs + dropoff_id + 1);
+            dropoffs[dropoff_id + num_players].update(x, y);
+            players[id].dropoffs.put(dropoffs + dropoff_id + num_players);
         }
     }
 
@@ -116,7 +117,22 @@ void Game::run_statistics()
                 }   
             }
 
-            dist_to_dropoff[p] = grid.dist(p, me->spawn);
+            int min_dist = map_width*2;
+            Dropoff* best = nullptr;
+            for(auto& dropoff : me->dropoffs)
+            {
+                int dist = grid.dist(p, dropoff->pos);
+                if (dist <= min_dist)
+                {
+                    best = dropoff;
+                    min_dist = dist;
+                }
+            }
+            
+            nearest_dropoff[p] = best;
+            dist_to_dropoff[p] = min_dist;
+            
+            // And now i really don't remember how i computed this. i had to add a comment, my bad. to be reviewed soon.
             turns_to_collect[p] = static_cast<int>(.5f + log(200.f / std::max(200, grid[p])) / log(.75f));
         }
     }

@@ -24,7 +24,8 @@ class Game
     // Statistics
     Grid<float> halite_nbhood, turns_to_collect;
     Grid<int> dist_to_dropoff;
-
+    Grid<Dropoff*> nearest_dropoff;
+    
     Game();
 
     void init_input();
