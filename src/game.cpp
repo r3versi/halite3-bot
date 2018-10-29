@@ -37,6 +37,7 @@ void Game::init_input()
     turns_to_collect = Grid<float>(map_width, map_height);
     dist_to_dropoff = Grid<int>(map_width, map_height);
     nearest_dropoff = Grid<Dropoff*>(map_width, map_height);
+    total_halite = 0;
 
     size_t halite;
     for (size_t y = 0; y < map_height; y++)
@@ -46,6 +47,7 @@ void Game::init_input()
             std::cin >> halite;
             grid.at(x, y) = halite;
             cache_grid.at(x, y) = halite;
+            total_halite += halite;
         }
     }
 }
@@ -91,6 +93,8 @@ void Game::turn_update()
     {
         int x, y, halite;
         std::cin >> x >> y >> halite;
+        
+        total_halite -= (grid.at(x,y) - halite);
         grid.at(x, y) = halite;
     }
 
@@ -136,6 +140,32 @@ void Game::run_statistics()
             turns_to_collect[p] = static_cast<int>(.5f + log(200.f / std::max(200, grid[p])) / log(.75f));
         }
     }
+
+    update_sectors();
+}
+
+void Game::update_sectors()
+{
+    int side = map_width / SECTOR_ROW;
+    for(size_t i = 0; i < NUM_SECTORS; i++)
+    {
+        int x0 = (i%side)*side, y0 = (i/side)*side;
+        int sum_x = 0, sum_y = 0, sum_halite = 0;
+        for(int x = x0; x < x0 + side; x++)
+        {
+            for(int y = y0; y < y0 + side; y++)
+            {
+                int m = grid.at(x, y);
+                sum_halite += m;
+                sum_x = x*m;
+                sum_y = y*m;
+            }
+        }
+        
+        sectors[i].centroid = Point(sum_x/sum_halite, sum_y/sum_halite);
+        sectors[i].halite = sum_halite;
+    }
+    
 }
 
 void Game::load()

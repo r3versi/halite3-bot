@@ -25,13 +25,22 @@ class Game
     Grid<float> halite_nbhood, turns_to_collect;
     Grid<int> dist_to_dropoff;
     Grid<Dropoff*> nearest_dropoff;
-    
+
+    int total_halite;
+    /* 
+       8x8 sectors (side of a sector = 4, 5, 6, 7, 8, for map_width = 32, 40, 48, 56, 64)
+       maybe try 4x4 sectors too (sides = 8, 10, 12, 14, 16).
+       anyway, number of sectors *should* be related to the radius of scan performed by a ship at DirectSearch::find_mining_site
+    */
+    Sector sectors[NUM_SECTORS];
+
     Game();
 
     void init_input();
     void turn_update();
 
     void run_statistics();
+    void update_sectors();
 
     void load();
     void save();

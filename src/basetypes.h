@@ -194,3 +194,8 @@ class Player
 
 using Map = Grid<int>;
 using Mask = Grid<bool>;
+
+struct Sector {
+    Point centroid;
+    int halite;
+};
