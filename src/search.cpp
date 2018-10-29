@@ -349,7 +349,7 @@ void DirectSearch::navigate()
             continue;
 
         ship_on_tile[0][ship->pos] = ship;
-        if (!engine->can_move(ship) || ship->target == ship->pos)
+        if (!engine->can_move(ship))
         {
             ship_on_tile[1][ship->pos] = ship;
             ship->action = 0;
@@ -420,7 +420,12 @@ bool DirectSearch::move_ship(Ship *ship)
             Point na = ship->pos + moves_dir[a], nb = ship->pos + moves_dir[b];
             engine->game->grid.normalize(na);
             engine->game->grid.normalize(nb);
-            return engine->game->grid.dist(ship->target, na) < engine->game->grid.dist(ship->target, nb);
+            int da = engine->game->grid.dist(ship->target, na);
+            int db = engine->game->grid.dist(ship->target, nb);
+            
+            // priority: 1- distance, 2- cost
+            if (da != db)   return da < db;
+            else            return engine->game->grid[na] < engine->game->grid[nb];
         });
 
         for (auto i : dirs)
@@ -430,47 +435,6 @@ bool DirectSearch::move_ship(Ship *ship)
         }
         
         return false;
-        /*
-        Point dir0 = ship->target - ship->pos, dir1 = -dir0;
-        std::cerr << dir0 << " " << dir1 << std::endl;
-        engine->game->grid.normalize(dir0);
-        engine->game->grid.normalize(dir1);
-        std::cerr << dir0 << " " << dir1 << std::endl;
-        std::cerr << dir0.length() << " " << dir1.length() << std::endl;
-        Point dir = dir0.length() <= dir1.length() ? ship->target - ship->pos : ship->pos - ship->target;
-        
-        if (dir.x < 0)
-        {
-            if (move_ship_dir(ship, 4))
-                return true;
-        }
-        else if (dir.x > 0)
-        {
-            // e
-            if (move_ship_dir(ship, 2))
-                return true;
-        }
-
-        if (dir.y < 0)
-        {
-            //n
-            if (move_ship_dir(ship, 1))
-                return true;
-        }
-        else if (dir.y > 0)
-        {
-            //s
-            if (move_ship_dir(ship, 3))
-                return true;
-        }
-
-        // try other directions
-        for (auto &i : {1, 2, 3, 4, 0})
-        {
-            if (move_ship_dir(ship, i))
-                return true;
-        }
-        */
     }
     else
     {

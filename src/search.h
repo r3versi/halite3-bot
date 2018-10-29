@@ -100,7 +100,7 @@ public:
     Point find_mining_site(Ship* ship, bool first = true);
     Point find_mining_zone(Ship *ship);
 
-        bool next_turn_free(Point &p);
+    bool next_turn_free(Point &p);
     Ship* next_turn(Point &p);
     bool  move_ship_dir(Ship *ship, int dir);
 };

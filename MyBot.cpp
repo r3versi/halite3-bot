@@ -54,7 +54,8 @@ int main(int argc, char *argv[])
         cerr << "Commands string= \" " << solver.get_commands() << endl;
         cout << solver.get_commands() << endl;
     }
-        /*
+
+    /*
     while(true)
     {
         game.turn_update();
