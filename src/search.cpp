@@ -253,19 +253,10 @@ void DirectSearch::assign_tasks()
 
 Point DirectSearch::find_deliver_site(Ship *ship)
 {
-    /*
-    int min_dist = 100;
-    for(auto& dropoff : engine->game->me->dropoffs)
-    {
-        int dist = engine->game->grid.dist(ship->pos, dropoff->pos);
-        if (dist < min_dist)
-            ship->target = dropoff->pos;
-    }
-    */
     if (!ship->active)
         std::cerr << "Ship not active!" << std::endl;
 
-    return engine->game->me->spawn;
+    return engine->game->nearest_dropoff[ship->pos]->pos;
 }
 
 Point DirectSearch::find_mining_site(Ship *ship, bool first)
@@ -314,22 +305,27 @@ Point DirectSearch::find_mining_site(Ship *ship, bool first)
     return best;
 }
 
-Point DirectSearch::find_mining_zone(Ship *ship)
+Point DirectSearch::find_mining_sector(Ship *ship)
 {
-    //Point dir = ship->pos - engine->game->me->spawn;
-    Point neighbours[5];
-    for(auto i : {0,1,2,3,4})
-    {
-        neighbours[i] = ship->pos + moves_dir[i];
-        engine->game->grid.normalize(neighbours[i]);
-    }
-
-    std::sort(std::begin(neighbours), std::end(neighbours),
-              [this](Point &a, Point &b) {
-                  return engine->game->grid[a] > engine->game->grid[b];
+    /*
+    std::sort(std::begin(engine->game->sectors), std::end(engine->game->sectors),
+              [this, ship](Sector &a, Sector &b) {
+                  return a.halite / (engine->game->dist_to_dropoff[a.centroid]) > b.halite / (engine->game->dist_to_dropoff[b.centroid]);
               });
-
-    return neighbours[0];
+    */
+    int best_score = 0;
+    Point best = ship->pos;
+    for (auto& sector : engine->game->sectors)
+    {
+        int score = sector.halite / (engine->game->dist_to_dropoff[sector.centroid] + engine->game->grid.dist(sector.centroid, ship->pos));
+        if (score > best_score)
+        {
+            best_score = score;
+            best = sector.centroid;
+            
+        }
+    }
+    return best;
 }
 
 

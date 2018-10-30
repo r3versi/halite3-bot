@@ -149,20 +149,21 @@ void Game::update_sectors()
     int side = map_width / SECTOR_ROW;
     for(size_t i = 0; i < NUM_SECTORS; i++)
     {
-        int x0 = (i%side)*side, y0 = (i/side)*side;
-        int sum_x = 0, sum_y = 0, sum_halite = 0;
+        int x0 = (i%SECTOR_ROW)*side, y0 = (i/SECTOR_ROW)*side;
+        long unsigned sum_x = 0, sum_y = 0, sum_weights = 0, sum_halite = 0;
         for(int x = x0; x < x0 + side; x++)
         {
             for(int y = y0; y < y0 + side; y++)
             {
                 int m = grid.at(x, y);
                 sum_halite += m;
-                sum_x = x*m;
-                sum_y = y*m;
+                sum_weights += m*m;
+                sum_x += x*m*m;
+                sum_y += y*m*m;
             }
         }
         
-        sectors[i].centroid = Point(sum_x/sum_halite, sum_y/sum_halite);
+        sectors[i].centroid = Point(sum_x/sum_weights, sum_y/sum_weights);
         sectors[i].halite = sum_halite;
     }
     
