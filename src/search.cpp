@@ -264,7 +264,7 @@ Point DirectSearch::find_mining_site(Ship *ship, bool first)
     float best_score = 0.;
     Point best = ship->pos;
     //std::cerr << *ship << std::endl;
-    int radius = 4;
+    int radius = engine->game->map_width/2;
     for(int dy = -radius; dy <= radius; dy++)
     {
         for (int dx = -radius; dx <= radius; dx++)
@@ -278,6 +278,8 @@ Point DirectSearch::find_mining_site(Ship *ship, bool first)
             int mining_turns = std::max(0, 2 * radius - engine->game->grid.dist(ship->pos, p));
             float score = static_cast<float>(engine->game->grid[p]) / 4.f
             * (1.f - std::pow(.75f, mining_turns)) / .25f;
+            
+            score = std::min(MAX_CARGO - ship->halite, static_cast<int>(score));
 
             score /= 1. + engine->game->grid.dist(ship->pos, p);
             if (score > best_score)
