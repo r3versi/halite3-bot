@@ -66,23 +66,21 @@ public:
     Solution search(float time_limit);
 };
 
-const int NONE = -1;
-const int DELIVER = 0;
-const int GOTO = 1;
-const int MINE = 2;
-
 class DirectSearch : public Search {
 public:
 
+    bool mode;
     bool endgame;
-    Grid<Ship *> ship_on_tile[2];
-    Grid<Ship *> targeted;
+
+    Grid<Ship *> ship_on_tile;  // ship on tile next turn
+    Grid<Ship *> targeted;      // mining site targeted by
+    
     DirectSearch(size_t depth, Engine* engine) : Search(depth, engine) 
     {
-        ship_on_tile[0] = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
-        ship_on_tile[1] = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
+        ship_on_tile = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
         targeted = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
         endgame = false;
+        mode = engine->game->num_players == 2 ? MODE_2P : MODE_4P;
     }
 
     Solution search(float time_limit);
@@ -92,15 +90,11 @@ public:
     void assign_tasks();
     void navigate();
 
-    void find_target(Ship& ship);
-    
-    bool move_ship(Ship* ship);
-
-    Point find_deliver_site(Ship* ship);
-    Point find_mining_site(Ship* ship, bool first = true);
+    Point find_deliver_site(Ship *ship);
+    Point find_mining_site(Ship *ship, bool first = true);
     Point find_mining_sector(Ship *ship);
 
-    bool next_turn_free(Point &p);
-    Ship* next_turn(Point &p);
-    bool  move_ship_dir(Ship *ship, int dir);
+    bool move_ship(Ship *ship);
+    bool move_ship_dir(Ship *ship, int dir);
+
 };

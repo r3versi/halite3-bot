@@ -18,3 +18,11 @@ const int MAX_CARGO = 1000;
 const int INSPIRATION_BONUS = 2;
 const int INSPIRATION_RADIUS = 4;
 const unsigned long INSPIRATION_SHIP_COUNT = 2;
+
+// ship tasks (~ order priority)
+const int NONE = -1;
+const int DELIVER = 0;
+const int GOTO = 1;
+const int MINE = 2;
+
+const int MODE_2P = 0, MODE_4P = 1;

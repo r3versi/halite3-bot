@@ -37,6 +37,13 @@ void Game::init_input()
     turns_to_collect = Grid<float>(map_width, map_height);
     dist_to_dropoff = Grid<int>(map_width, map_height);
     nearest_dropoff = Grid<Dropoff*>(map_width, map_height);
+
+    for(size_t i = 0; i < num_players; i++)
+    {
+        inspired[i] = Grid<int>(map_width, map_height);
+        unsafe[i] = Grid<bool>(map_width, map_height);
+    }
+    ships_grid = Grid<Ship *>(map_width, map_height);
     total_halite = 0;
 
     size_t halite;
@@ -57,8 +64,14 @@ void Game::turn_update()
     // ./halite feeds 1 based turn, i like 0 based
     std::cin >> turn;
 
+    for (size_t i = 0; i < num_players; i++)
+    {
+        inspired[i].reset();
+        unsafe[i].reset();
+    }
+    ships_grid.reset();
     set_ships_dead();
-    
+
     for (size_t i = 0; i < num_players; i++)
     {
     
@@ -72,8 +85,24 @@ void Game::turn_update()
             int ship_id, x, y, cargo;
             std::cin >> ship_id >> x >> y >> cargo;
 
-            ships[ship_id].update(ship_id, id, x, y, cargo);
-            players[id].ships.put(ships + ship_id);
+            Ship* ship = ships + ship_id;
+            
+            ship->update(ship_id, id, x, y, cargo);
+            players[id].ships.put(ship);
+            ships_grid[ship->pos] = ship;
+            
+            for(auto dir : {Point(0,0),Point(0,-1), Point(1,0), Point(0,1), Point(-1,0)})
+            {
+                Point n = ship->pos + dir;
+                grid.normalize(n);
+                for (size_t k = 0; k < num_players; k++)
+                {
+                    if (k == id)
+                        continue;
+
+                    unsafe[k][n] = true;
+                }
+            }            
         }
 
         for (size_t j = 0; j < n_dropoffs; j++)
