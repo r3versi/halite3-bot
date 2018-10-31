@@ -21,10 +21,18 @@ class Game
     Ship cache_ships[4 * MAX_SHIPS];
     Dropoff cache_dropoffs[4 * MAX_DROPOFFS];
 
+    // 1 for player
+    Grid<int> inspired[4];
+    Grid<bool> unsafe[4];
+
+    // location -> ship at the beginning of the turn
+    Grid<Ship *> ships_grid;
+
     // Statistics
     Grid<float> halite_nbhood, turns_to_collect;
     Grid<int> dist_to_dropoff;
     Grid<Dropoff*> nearest_dropoff;
+
 
     int total_halite;
     /* 

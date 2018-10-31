@@ -174,8 +174,7 @@ float Search::evaluate(Solution &sol)
 Solution DirectSearch::search(float time_limit)
 {
     std::cerr << "Time limit " << time_limit << std::endl;
-    ship_on_tile[0].reset();
-    ship_on_tile[1].reset();
+    ship_on_tile.reset();
     targeted.reset();
 
     assign_tasks();
@@ -183,7 +182,7 @@ Solution DirectSearch::search(float time_limit)
 
     if (engine->game->me->halite >= 1000 && 
         engine->game->me->ships.size() < 30 &&
-        ship_on_tile[1][engine->game->me->spawn] == nullptr &&
+        ship_on_tile[engine->game->me->spawn] == nullptr &&
         engine->game->max_turn - engine->game->turn > 100
         )
     {
@@ -192,7 +191,7 @@ Solution DirectSearch::search(float time_limit)
     else
     {
         std::cerr << "Cannot spawn new ship: "
-                  << ship_on_tile[1][engine->game->me->spawn] << "on tile" << std::endl
+                  << ship_on_tile[engine->game->me->spawn] << "on tile" << std::endl
                   << engine->game->me->halite << " halite" << std::endl
                   << engine->game->me->ships.size() << " ships" << std::endl;
 
@@ -346,10 +345,9 @@ void DirectSearch::navigate()
         if (!ship->active)
             continue;
 
-        ship_on_tile[0][ship->pos] = ship;
         if (!engine->can_move(ship))
         {
-            ship_on_tile[1][ship->pos] = ship;
+            ship_on_tile[ship->pos] = ship;
             ship->action = 0;
             ship->just_moved = true;
             continue;
@@ -366,7 +364,7 @@ void DirectSearch::navigate()
         if (move_ship(ship))
         {
             if (endgame)
-                ship_on_tile[1][engine->game->me->spawn] = nullptr;
+                ship_on_tile[engine->game->me->spawn] = nullptr;
             std::cerr << "SUCCESS " << ship->id << " to " << moves_str[ship->action] << std::endl;
         }
         else
@@ -374,35 +372,41 @@ void DirectSearch::navigate()
     }
 }
 
-bool DirectSearch::next_turn_free(Point &p)
-{
-    return (ship_on_tile[1][p] == nullptr);
-}
-
-Ship *DirectSearch::next_turn(Point &p)
-{
-    return ship_on_tile[1][p];
-}
-
 bool DirectSearch::move_ship_dir(Ship *ship, int dir)
 {
     Point n = ship->pos + moves_dir[dir];
     engine->game->grid.normalize(n);
-    Ship *other_ship = next_turn(n);
-    if (other_ship == nullptr)
+    
+    if (mode == MODE_2P)
     {
-        ship_on_tile[1][n] = ship;
-        ship->just_moved = true;
-        ship->action = dir;
-        return true;
+        Ship *other_ship = ship_on_tile[n];
+        if (other_ship == nullptr)
+        {
+            ship_on_tile[n] = ship;
+            ship->just_moved = true;
+            ship->action = dir;
+            return true;
+        }
     }
+    else
+    {
+        // preserve ship
+        Ship *other_ship = ship_on_tile[n];
+        if (other_ship == nullptr && (/*ship->task != DELIVER ||*/ !engine->game->unsafe[ship->owner][n]))
+        {
+            ship_on_tile[n] = ship;
+            ship->just_moved = true;
+            ship->action = dir;
+            return true;
+        }
+    }
+    
     return false;
 }
 
 // returns true if found successful move (i.e. no collision)
 bool DirectSearch::move_ship(Ship *ship)
 {
-    
     if (ship->target == ship->pos)
     {
         if (move_ship_dir(ship, 0))
