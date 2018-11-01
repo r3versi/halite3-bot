@@ -180,6 +180,28 @@ Solution DirectSearch::search(float time_limit)
     assign_tasks();
     navigate();
 
+    if (engine->game->me->dropoffs.size() < max_dropoffs() &&
+        engine->game->max_turn - engine->game->turn > 100)
+    {
+        Ship* best = nullptr;
+        int max_dist = 0;
+        for(auto& ship : engine->game->me->ships)
+        {
+            if (ship->halite + engine->game->me->halite + engine->game->grid[ship->pos] >= 4000 &&
+                engine->game->dist_to_dropoff[ship->pos] > max_dist)
+            {
+                max_dist = engine->game->dist_to_dropoff[ship->pos];
+                best = ship;
+            }
+        }
+        
+        if (best != nullptr && max_dist >= 25)
+        {
+            engine->game->me->halite -= (4000 - best->halite - engine->game->grid[best->pos]) ;
+            best->action = 5;
+        }
+    }
+
     if (engine->game->me->halite >= 1000 && 
         engine->game->me->ships.size() < max_ships() &&
         ship_on_tile[engine->game->me->spawn] == nullptr &&
@@ -189,15 +211,17 @@ Solution DirectSearch::search(float time_limit)
         engine->game->me->action = true;
     }
     else
-    {
-        std::cerr << "Cannot spawn new ship: "
-                  << ship_on_tile[engine->game->me->spawn] << "on tile" << std::endl
-                  << engine->game->me->halite << " halite" << std::endl
-                  << engine->game->me->ships.size() << " ships" << std::endl;
-
         engine->game->me->action = false;
-    }
     return Solution();
+}
+
+unsigned int DirectSearch::max_dropoffs()
+{
+    int map_id = (engine->game->map_width - 32) / 8;
+    if (mode == MODE_2P)
+        return MAX_DROPOFFS_2P[map_id];
+    else
+        return MAX_DROPOFFS_4P[map_id];
 }
 
 unsigned int DirectSearch::max_ships()
@@ -253,7 +277,7 @@ void DirectSearch::assign_tasks()
             ship->target = find_mining_site(ship, true);
         }
 
-        std::cerr << *ship << " {Task: " << ship->task << ", Target " << ship->target << "}" << std::endl;
+        //std::cerr << *ship << " {Task: " << ship->task << ", Target " << ship->target << "}" << std::endl;
     }
 
     std::cerr << "RECOMPUTE TASKS" << std::endl;
@@ -263,7 +287,7 @@ void DirectSearch::assign_tasks()
             continue;
         
         ship->target = find_mining_site(ship, false);
-        std::cerr << *ship << " {Task: " << ship->task << ", Target " << ship->target << "}" << std::endl;
+        //std::cerr << *ship << " {Task: " << ship->task << ", Target " << ship->target << "}" << std::endl;
     }
 }
 
@@ -381,11 +405,15 @@ void DirectSearch::navigate()
         if (move_ship(ship))
         {
             if (endgame)
-                ship_on_tile[engine->game->me->spawn] = nullptr;
-            std::cerr << "SUCCESS " << ship->id << " to " << moves_str[ship->action] << std::endl;
+            {
+                for(auto& dropoff : engine->game->me->dropoffs)
+                    ship_on_tile[dropoff->pos] = nullptr;
+            }
+            //std::cerr << "SUCCESS " << ship->id << " to " << moves_str[ship->action] << std::endl;
         }
-        else
+        /*else
             std::cerr << "FAIL " << ship->id << std::endl;
+        */
     }
 }
 

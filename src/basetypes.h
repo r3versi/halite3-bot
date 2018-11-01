@@ -149,8 +149,10 @@ class Dropoff : public Entity
     Dropoff() : Entity() {}
     Dropoff(int id, int owner, int x, int y) : Entity(id, owner, x, y) {}
 
-    inline void update(int x, int y)
+    inline void update(int id, int owner, int x, int y)
     {
+        this->id = id;
+        this->owner = owner;
         active = true;
         pos = Point(x, y);
     }

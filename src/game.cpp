@@ -110,7 +110,7 @@ void Game::turn_update()
             int dropoff_id, x, y;
             std::cin >> dropoff_id >> x >> y;
 
-            dropoffs[dropoff_id + num_players].update(x, y);
+            dropoffs[dropoff_id + num_players].update(dropoff_id, id, x, y);
             players[id].dropoffs.put(dropoffs + dropoff_id + num_players);
         }
     }
@@ -171,6 +171,26 @@ void Game::run_statistics()
     }
 
     update_sectors();
+
+/*    
+    for(size_t y = 0; y < map_height; y++)
+    {
+        for(size_t x = 0; x < map_width; x++)
+        {
+            std::cerr << dist_to_dropoff.at(x,y) << " ";
+        }
+        std::cerr << std::endl;
+    }
+
+    for (size_t y = 0; y < map_height; y++)
+    {
+        for (size_t x = 0; x < map_width; x++)
+        {
+            std::cerr << nearest_dropoff.at(x, y)->id << " ";
+        }
+        std::cerr << std::endl;
+    }
+*/
 }
 
 void Game::update_sectors()

@@ -46,7 +46,7 @@ int main(int argc, char *argv[])
              << "TURN " << game.turn
              << " @" << TURNTIME << " ms" << endl;
 
-        solver.search(1000.);
+        solver.search(0.);
 
         cerr << "Search terminated"
              << " @" << TURNTIME << " ms" << endl;
