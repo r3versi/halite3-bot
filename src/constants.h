@@ -26,3 +26,15 @@ const int GOTO = 1;
 const int MINE = 2;
 
 const int MODE_2P = 0, MODE_4P = 1;
+
+
+// (map_size - 32)/8 -> 0, 1, 2, 3, 4
+
+const int MAX_DROPOFFS_2P[5] = {1, 1, 2, 4, 6};
+const int MAX_DROPOFFS_4P[5] = {1, 1, 2, 3, 4};
+
+const int MIN_SHIPS_2P[5] = {25, 40, 45, 55, 55};
+const int MAX_SHIPS_2P[5] = {30, 45, 60, 80, 80};
+
+const int MIN_SHIPS_4P[5] = {20, 25, 30, 40, 40};
+const int MAX_SHIPS_4P[5] = {25, 30, 40, 50, 50};

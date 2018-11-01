@@ -181,7 +181,7 @@ Solution DirectSearch::search(float time_limit)
     navigate();
 
     if (engine->game->me->halite >= 1000 && 
-        engine->game->me->ships.size() < 30 &&
+        engine->game->me->ships.size() < max_ships() &&
         ship_on_tile[engine->game->me->spawn] == nullptr &&
         engine->game->max_turn - engine->game->turn > 100
         )
@@ -198,6 +198,23 @@ Solution DirectSearch::search(float time_limit)
         engine->game->me->action = false;
     }
     return Solution();
+}
+
+unsigned int DirectSearch::max_ships()
+{
+    // <100 per tile = min, > 200 per tile = max
+    // # ships = MIN + (MAX - MIN)* (min(200, max(100, tot/(size*size))) - 100)/100
+    int map_id = (engine->game->map_width - 32) / 8;
+    unsigned int ships = 0;
+    if (mode == MODE_2P)
+    {
+        ships = MIN_SHIPS_2P[map_id] + (MAX_SHIPS_2P[map_id] - MIN_SHIPS_2P[map_id]) * (std::min(200.f, std::max(100.f, (float)engine->game->total_halite / (engine->game->map_width * engine->game->map_width)))-100.f)/100.f;
+    }
+    else
+    {
+        ships = MIN_SHIPS_4P[map_id] + (MAX_SHIPS_4P[map_id] - MIN_SHIPS_4P[map_id]) * (std::min(200.f, std::max(100.f, (float)engine->game->total_halite / (engine->game->map_width * engine->game->map_width))) - 100.f) / 100.f;
+    }
+    return ships;
 }
 
 std::string DirectSearch::get_commands()
@@ -376,11 +393,12 @@ bool DirectSearch::move_ship_dir(Ship *ship, int dir)
 {
     Point n = ship->pos + moves_dir[dir];
     engine->game->grid.normalize(n);
-    
-    if (mode == MODE_2P)
+
+    if (mode == MODE_4P || (mode == MODE_2P && ship->task == DELIVER))
     {
+        // preserve ship
         Ship *other_ship = ship_on_tile[n];
-        if (other_ship == nullptr)
+        if (other_ship == nullptr && (/*ship->task != DELIVER ||*/ !engine->game->unsafe[ship->owner][n]))
         {
             ship_on_tile[n] = ship;
             ship->just_moved = true;
@@ -390,9 +408,8 @@ bool DirectSearch::move_ship_dir(Ship *ship, int dir)
     }
     else
     {
-        // preserve ship
         Ship *other_ship = ship_on_tile[n];
-        if (other_ship == nullptr && (/*ship->task != DELIVER ||*/ !engine->game->unsafe[ship->owner][n]))
+        if (other_ship == nullptr)
         {
             ship_on_tile[n] = ship;
             ship->just_moved = true;

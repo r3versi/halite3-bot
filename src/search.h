@@ -87,6 +87,8 @@ public:
 
     std::string get_commands();
 
+    unsigned int max_ships();
+
     void assign_tasks();
     void navigate();
 
