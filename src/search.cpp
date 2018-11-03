@@ -232,11 +232,11 @@ unsigned int DirectSearch::max_ships()
     unsigned int ships = 0;
     if (mode == MODE_2P)
     {
-        ships = MIN_SHIPS_2P[map_id] + (MAX_SHIPS_2P[map_id] - MIN_SHIPS_2P[map_id]) * (std::min(200.f, std::max(100.f, (float)engine->game->total_halite / (engine->game->map_width * engine->game->map_width)))-100.f)/100.f;
+        ships = MIN_SHIPS_2P[map_id] + (MAX_SHIPS_2P[map_id] - MIN_SHIPS_2P[map_id]) * (std::min(UPPER_BOUND_2P[map_id], std::max(LOWER_BOUND_2P[map_id], (float)engine->game->total_halite / (engine->game->map_width * engine->game->map_width)))-100.f)/100.f;
     }
     else
     {
-        ships = MIN_SHIPS_4P[map_id] + (MAX_SHIPS_4P[map_id] - MIN_SHIPS_4P[map_id]) * (std::min(200.f, std::max(100.f, (float)engine->game->total_halite / (engine->game->map_width * engine->game->map_width))) - 100.f) / 100.f;
+        ships = MIN_SHIPS_4P[map_id] + (MAX_SHIPS_4P[map_id] - MIN_SHIPS_4P[map_id]) * (std::min(UPPER_BOUND_4P[map_id], std::max(LOWER_BOUND_4P[map_id], (float)engine->game->total_halite / (engine->game->map_width * engine->game->map_width))) - 100.f) / 100.f;
     }
     return ships;
 }

@@ -30,11 +30,17 @@ const int MODE_2P = 0, MODE_4P = 1;
 
 // (map_size - 32)/8 -> 0, 1, 2, 3, 4
 
+const float LOWER_BOUND_2P[5] = {131.3f, 120.9f, 119.7f, 117.1f, 127.8f};
+const float UPPER_BOUND_2P[5] = {229.4f, 199.6f, 188.8f, 173.1f, 219.0f};
+
+const float LOWER_BOUND_4P[5] = {149.5f, 127.5f, 128.9f, 119.8f, 144.5f};
+const float UPPER_BOUND_4P[5] = {277.1f, 232.1f, 222.9f, 197.9f, 263.0f};
+
 const int MAX_DROPOFFS_2P[5] = {1, 1, 2, 4, 6};
 const int MAX_DROPOFFS_4P[5] = {1, 1, 2, 3, 3};
 
-const int MIN_SHIPS_2P[5] = {25, 40, 45, 55, 55};
-const int MAX_SHIPS_2P[5] = {30, 45, 60, 80, 100};
+const int MIN_SHIPS_2P[5] = {25, 30, 45, 55, 55};
+const int MAX_SHIPS_2P[5] = {40, 50, 60, 80, 100};
 
 const int MIN_SHIPS_4P[5] = {20, 25, 30, 40, 40};
-const int MAX_SHIPS_4P[5] = {25, 30, 40, 50, 50};
+const int MAX_SHIPS_4P[5] = {35, 40, 50, 60, 70};
