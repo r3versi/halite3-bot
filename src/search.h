@@ -97,7 +97,7 @@ public:
     Point find_mining_site(Ship *ship, bool first = true);
     Point find_mining_sector(Ship *ship);
 
-    bool move_ship(Ship *ship);
+    bool move_ship(Ship *ship, Ship *forcing = nullptr);
     bool move_ship_dir(Ship *ship, int dir);
 
 };

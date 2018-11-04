@@ -411,9 +411,9 @@ void DirectSearch::navigate()
             }
             //std::cerr << "SUCCESS " << ship->id << " to " << moves_str[ship->action] << std::endl;
         }
-        /*else
+        else
             std::cerr << "FAIL " << ship->id << std::endl;
-        */
+        
     }
 }
 
@@ -445,12 +445,12 @@ bool DirectSearch::move_ship_dir(Ship *ship, int dir)
             return true;
         }
     }
-    
+
     return false;
 }
 
 // returns true if found successful move (i.e. no collision)
-bool DirectSearch::move_ship(Ship *ship)
+bool DirectSearch::move_ship(Ship *ship, Ship *forcing)
 {
     if (ship->target == ship->pos)
     {
@@ -480,14 +480,64 @@ bool DirectSearch::move_ship(Ship *ship)
             if (move_ship_dir(ship, i))
                 return true;
         }
-        
-        return false;
+
+        for (auto dir : dirs)
+        {
+            Point n = ship->pos + moves_dir[dir];
+            engine->game->grid.normalize(n);
+
+            Ship *other_ship = ship_on_tile[n];
+            if (other_ship == nullptr)
+            {
+                ship_on_tile[n] = ship;
+                ship->just_moved = true;
+                ship->action = dir;
+                return true;
+            }
+            else
+            {
+                if (other_ship != forcing)
+                {
+                    ship_on_tile[n] = ship;
+                    ship->just_moved = true;
+                    ship->action = dir;
+                    other_ship->just_moved = false;
+
+                    if (move_ship(other_ship, ship))
+                    {
+                        return true;
+                    }
+
+                    // if can't force move, reset previous situation!
+                    ship_on_tile[n] = other_ship;
+                    other_ship->just_moved = true;
+                    ship->just_moved = false;
+                }
+            }
+        }
     }
     else
     {
         // can stay still?
         if (move_ship_dir(ship, 0))
             return true;
+        
+        else
+        {
+            std::cerr << "FAIL - unmovable - " << *ship << std::endl;
+            
+            Ship* other_ship = ship_on_tile[ship->pos];
+
+            ship_on_tile[ship->pos] = ship;
+            ship->just_moved = true;
+            ship->action = 0;
+            other_ship->just_moved = false;
+
+            if (forcing != other_ship && move_ship(other_ship, ship))
+            {
+                return true;
+            }
+        }
     }
 
     return false;
