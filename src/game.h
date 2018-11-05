@@ -7,7 +7,8 @@
 class Game
 {
   public:
-    size_t my_id, num_players, map_width, map_height, turn;
+    int my_id;
+    size_t num_players, map_width, map_height, turn;
     size_t max_turn;
     Player* me;
 

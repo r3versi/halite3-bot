@@ -422,11 +422,26 @@ bool DirectSearch::move_ship_dir(Ship *ship, int dir)
     Point n = ship->pos + moves_dir[dir];
     engine->game->grid.normalize(n);
 
-    if (mode == MODE_4P || (mode == MODE_2P && ship->task == DELIVER))
+    // my ship plans to move there next turn
+    Ship *other_ship = ship_on_tile[n];
+    if (other_ship != nullptr)
+        return false;
+
+    if (ship->task == DELIVER)
     {
-        // preserve ship
-        Ship *other_ship = ship_on_tile[n];
-        if (other_ship == nullptr && (/*ship->task != DELIVER ||*/ !engine->game->unsafe[ship->owner][n]))
+        if (!engine->game->unsafe[ship->owner][n])
+        {
+            ship_on_tile[n] = ship;
+            ship->just_moved = true;
+            ship->action = dir;
+            return true;
+        }
+    }
+    else if (mode == MODE_4P)
+    {
+        // any ship currently on this spot
+        Ship* anyone = engine->game->ships_grid[n];
+        if (anyone == nullptr || (anyone != nullptr && anyone->owner == engine->game->my_id))
         {
             ship_on_tile[n] = ship;
             ship->just_moved = true;
@@ -436,14 +451,10 @@ bool DirectSearch::move_ship_dir(Ship *ship, int dir)
     }
     else
     {
-        Ship *other_ship = ship_on_tile[n];
-        if (other_ship == nullptr)
-        {
-            ship_on_tile[n] = ship;
-            ship->just_moved = true;
-            ship->action = dir;
-            return true;
-        }
+        ship_on_tile[n] = ship;
+        ship->just_moved = true;
+        ship->action = dir;
+        return true;
     }
 
     return false;

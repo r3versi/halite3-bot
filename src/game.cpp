@@ -37,13 +37,13 @@ void Game::init_input()
     turns_to_collect = Grid<float>(map_width, map_height);
     dist_to_dropoff = Grid<int>(map_width, map_height);
     nearest_dropoff = Grid<Dropoff*>(map_width, map_height);
+    ships_grid = Grid<Ship *>(map_width, map_height);
 
     for(size_t i = 0; i < num_players; i++)
     {
         inspired[i] = Grid<int>(map_width, map_height);
         unsafe[i] = Grid<bool>(map_width, map_height);
     }
-    ships_grid = Grid<Ship *>(map_width, map_height);
     total_halite = 0;
 
     size_t halite;
