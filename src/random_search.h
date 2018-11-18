@@ -65,39 +65,3 @@ public:
 
     Solution search(float time_limit);
 };
-
-class DirectSearch : public Search {
-public:
-
-    bool mode;
-    bool endgame;
-
-    Grid<Ship *> ship_on_tile;  // ship on tile next turn
-    Grid<Ship *> targeted;      // mining site targeted by
-    
-    DirectSearch(size_t depth, Engine* engine) : Search(depth, engine) 
-    {
-        ship_on_tile = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
-        targeted = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
-        endgame = false;
-        mode = engine->game->num_players == 2 ? MODE_2P : MODE_4P;
-    }
-
-    Solution search(float time_limit);
-
-    std::string get_commands();
-
-    unsigned int max_ships();
-    unsigned int max_dropoffs();
-   
-    void assign_tasks();
-    void navigate();
-
-    Point find_deliver_site(Ship *ship);
-    Point find_mining_site(Ship *ship, bool first = true);
-    Point find_mining_sector(Ship *ship);
-
-    bool move_ship(Ship *ship, Ship *forcing = nullptr);
-    bool move_ship_dir(Ship *ship, int dir);
-
-};

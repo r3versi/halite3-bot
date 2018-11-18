@@ -104,9 +104,9 @@ void Game::turn_update()
                 }
             }
 
-            for (int y = y0 - 3; y <= y0 + 3; ++y)
+            for (int y = y0 - 4; y <= y0 + 4; ++y)
             {
-                int delta = 3 - std::abs(y - y0);
+                int delta = 4 - std::abs(y - y0);
                 for (int x = x0 - delta; x <= x0 + delta; ++x)
                 {
                     for (size_t k = 0; k < num_players; k++)
@@ -192,27 +192,7 @@ void Game::run_statistics()
         }
     }
 
-    update_sectors();
-
-/*    
-    for(size_t y = 0; y < map_height; y++)
-    {
-        for(size_t x = 0; x < map_width; x++)
-        {
-            std::cerr << dist_to_dropoff.at(x,y) << " ";
-        }
-        std::cerr << std::endl;
-    }
-
-    for (size_t y = 0; y < map_height; y++)
-    {
-        for (size_t x = 0; x < map_width; x++)
-        {
-            std::cerr << nearest_dropoff.at(x, y)->id << " ";
-        }
-        std::cerr << std::endl;
-    }
-*/
+    // update_sectors();
 }
 
 void Game::update_sectors()

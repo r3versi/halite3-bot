@@ -4,6 +4,9 @@
 #include <constants.h>
 
 #include <chrono>
+
+extern std::chrono::time_point<std::chrono::high_resolution_clock> START;
+
 class Game
 {
   public:

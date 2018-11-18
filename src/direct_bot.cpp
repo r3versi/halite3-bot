@@ -1,183 +1,13 @@
-#include <search.h>
+#include <direct_bot.h>
 
 #include <iostream>
 #include <chrono>
 
 #define NOW std::chrono::high_resolution_clock::now()
-#define TURNTIME std::chrono::duration_cast<std::chrono::microseconds>(NOW - start).count() / 1000.
-auto start = NOW;
+#define TURNTIME std::chrono::duration_cast<std::chrono::microseconds>(NOW - START).count() / 1000.
 
-Solution GASearch::search(float time_limit)
+void HeurBot::search()
 {
-    auto start = NOW;
-    if (engine->game->me->ships.size() == 0)
-        return get_rnd();
-
-    for (size_t i = 0; i < pop_size; i++)
-    {
-        pop[i] = get_rnd();
-        pop[i]._score = evaluate(pop[i]);
-    }
-
-    sort();
-
-    while (TURNTIME < time_limit)
-    {
-
-        Solution &dad = pop[rnd(pop_size)];
-        Solution &mum = pop[rnd(pop_size)];
-
-        Solution child0, child1;
-        if (rnd(100) < 30)
-            cross(mum, dad, child0, child1);
-
-        if (rnd(100) < 15)
-            mutate(child0);
-
-        if (rnd(100) < 15)
-            mutate(child1);
-
-        child0._score = evaluate(child0);
-        child1._score = evaluate(child1);
-
-        int offset = 0;
-        if (child0._score > pop[0]._score)
-        {
-            offset = 1;
-            pop[0] = child0;
-        }
-        if (child1._score > pop[offset]._score)
-            pop[offset] = child1;
-
-        sort();
-        pop[0] = get_rnd();
-    }
-    return pop[pop_size - 1];
-}
-
-void GASearch::mutate(Solution &sol)
-{
-    size_t ship_id = rnd(engine->game->me->ships.size());
-    size_t turn = rnd(depth);
-
-    sol[ship_id][turn] = rnd(5);
-}
-
-void GASearch::cross(Solution &mum, Solution &dad, Solution &child0, Solution &child1)
-{
-    // swap whole ship genome between mum and dad
-    size_t ship_id = rnd(engine->game->me->ships.size());
-
-    child0 = mum;
-    child1 = dad;
-
-    child0[ship_id] = dad[ship_id];
-    child1[ship_id] = mum[ship_id];
-}
-
-void GASearch::sort()
-{
-    std::sort(pop, pop + pop_size, [](Solution &a, Solution &b) { return a._score < b._score; });
-}
-
-Solution RandomSearch::search(float time_limit)
-{
-    size_t count = 0;
-    auto start = NOW;
-    engine->game->save();
-
-    std::cerr << "Starting search" << std::endl;
-    
-    Solution best = get_rnd();
-    float best_score = evaluate(best);
-    
-    while (TURNTIME < time_limit)
-    {
-        ++count;
-        Solution sol = get_rnd();
-        float score = evaluate(sol);
-
-        if (score > best_score)
-        {
-            //std::cerr << "New best " << score << std::endl;
-            best = sol;
-            best_score = score;
-        }
-    }
-    std::cerr << count << std::endl;
-    return best;
-}
-
-Solution Search::get_rnd()
-{
-    Solution sol = Solution();
-
-    for (size_t i = 0; i < engine->game->me->ships.size(); i++)
-    {
-        ShipSolution ship_sol = ShipSolution();
-
-        for (size_t j = 0; j < depth; j++)
-        {
-            ship_sol.put(rnd(5));
-        }
-        sol.put(ship_sol);
-    }
-
-    return sol;
-}
-
-void Search::apply_actions(Solution &sol, int turn)
-{
-    for (size_t i = 0; i < sol.size(); i++)
-    {
-        engine->game->me->ships[i]->action = sol[i][turn];
-    }
-}
-
-float Search::evaluate(Solution &sol)
-{
-    Game *game = engine->game;
-    
-    for (size_t i = 0; i < depth; i++)
-    {
-        apply_actions(sol, i);
-        engine->play_turn();
-    }
-
-    float score = game->me->halite;
-
-    for (auto &ship : game->me->ships)
-    {
-        if (!ship->active)
-        {
-            score += -1000;
-            continue;
-        }
-
-        score += .75 * std::min(ship->halite, 930);
-
-        if (ship->halite > 500)
-        {
-            score +=  - 10 * game->grid.dist(ship->pos, game->me->spawn);
-        }
-        
-        else
-        {
-            score += 5 * game->grid.dist(ship->pos, game->me->spawn);
-        }
-        
-    }
-
-    game->load();
-    return score;
-}
-
-
-Solution DirectSearch::search(float time_limit)
-{
-    std::cerr << "Time limit " << time_limit << std::endl;
-    start = NOW;
-    
     ship_on_tile.reset();
     targeted.reset();
 
@@ -187,9 +17,9 @@ Solution DirectSearch::search(float time_limit)
     if (engine->game->me->dropoffs.size() < max_dropoffs() &&
         engine->game->max_turn - engine->game->turn > 100)
     {
-        Ship* best = nullptr;
+        Ship *best = nullptr;
         int max_dist = 0;
-        for(auto& ship : engine->game->me->ships)
+        for (auto &ship : engine->game->me->ships)
         {
             if (ship->halite + engine->game->me->halite + engine->game->grid[ship->pos] >= 4000 &&
                 engine->game->dist_to_dropoff[ship->pos] > max_dist)
@@ -198,28 +28,26 @@ Solution DirectSearch::search(float time_limit)
                 best = ship;
             }
         }
-        
+
         if (best != nullptr && max_dist >= 25)
         {
-            engine->game->me->halite -= (4000 - best->halite - engine->game->grid[best->pos]) ;
+            engine->game->me->halite -= (4000 - best->halite - engine->game->grid[best->pos]);
             best->action = 5;
         }
     }
 
-    if (engine->game->me->halite >= 1000 && 
+    if (engine->game->me->halite >= 1000 &&
         engine->game->me->ships.size() < max_ships() &&
         ship_on_tile[engine->game->me->spawn] == nullptr &&
-        engine->game->max_turn - engine->game->turn > 100
-        )
+        engine->game->max_turn - engine->game->turn > 100)
     {
         engine->game->me->action = true;
     }
     else
         engine->game->me->action = false;
-    return Solution();
 }
 
-unsigned int DirectSearch::max_dropoffs()
+unsigned int HeurBot::max_dropoffs()
 {
     int map_id = (engine->game->map_width - 32) / 8;
     if (mode == MODE_2P)
@@ -228,7 +56,7 @@ unsigned int DirectSearch::max_dropoffs()
         return MAX_DROPOFFS_4P[map_id];
 }
 
-unsigned int DirectSearch::max_ships()
+unsigned int HeurBot::max_ships()
 {
     // <100 per tile = min, > 200 per tile = max
     // # ships = MIN + (MAX - MIN)* (min(200, max(100, tot/(size*size))) - 100)/100
@@ -236,7 +64,7 @@ unsigned int DirectSearch::max_ships()
     unsigned int ships = 0;
     if (mode == MODE_2P)
     {
-        ships = MIN_SHIPS_2P[map_id] + (MAX_SHIPS_2P[map_id] - MIN_SHIPS_2P[map_id]) * (std::min(UPPER_BOUND_2P[map_id], std::max(LOWER_BOUND_2P[map_id], (float)engine->game->total_halite / (engine->game->map_width * engine->game->map_width)))-100.f)/100.f;
+        ships = MIN_SHIPS_2P[map_id] + (MAX_SHIPS_2P[map_id] - MIN_SHIPS_2P[map_id]) * (std::min(UPPER_BOUND_2P[map_id], std::max(LOWER_BOUND_2P[map_id], (float)engine->game->total_halite / (engine->game->map_width * engine->game->map_width))) - 100.f) / 100.f;
     }
     else
     {
@@ -245,20 +73,20 @@ unsigned int DirectSearch::max_ships()
     return ships;
 }
 
-std::string DirectSearch::get_commands()
+std::string HeurBot::get_commands()
 {
     std::string commands = "";
-    
+
     if (engine->game->me->action)
         commands += "g ";
 
-    for(auto& ship : engine->game->me->ships)
+    for (auto &ship : engine->game->me->ships)
         commands += ship->get_command();
 
     return commands;
 }
 
-void DirectSearch::assign_tasks()
+void HeurBot::assign_tasks()
 {
     int remaining_turns = engine->game->max_turn - engine->game->turn;
     endgame = remaining_turns < (int)engine->game->map_width;
@@ -289,13 +117,13 @@ void DirectSearch::assign_tasks()
     {
         if (!ship->active || ship->task != GOTO)
             continue;
-        
+
         ship->target = find_mining_site(ship, false);
         //std::cerr << *ship << " {Task: " << ship->task << ", Target " << ship->target << "}" << std::endl;
     }
 }
 
-Point DirectSearch::find_deliver_site(Ship *ship)
+Point HeurBot::find_deliver_site(Ship *ship)
 {
     if (!ship->active)
         std::cerr << "Ship not active!" << std::endl;
@@ -303,13 +131,13 @@ Point DirectSearch::find_deliver_site(Ship *ship)
     return engine->game->nearest_dropoff[ship->pos]->pos;
 }
 
-Point DirectSearch::find_mining_site(Ship *ship, bool first)
+Point HeurBot::find_mining_site(Ship *ship, bool first)
 {
     float best_score = 0.;
     Point best = ship->pos;
     //std::cerr << *ship << std::endl;
-    int radius = engine->game->map_width/2;
-    for(int dy = -radius; dy <= radius; dy++)
+    int radius = engine->game->map_width / 2;
+    for (int dy = -radius; dy <= radius; dy++)
     {
         for (int dx = -radius; dx <= radius; dx++)
         {
@@ -320,10 +148,8 @@ Point DirectSearch::find_mining_site(Ship *ship, bool first)
                 continue;
 
             int mining_turns = std::max(0, 2 * radius - engine->game->grid.dist(ship->pos, p));
-            float score = static_cast<float>(engine->game->grid[p]) / 4.f
-            * (1.f - std::pow(.75f, mining_turns)) / .25f 
-            * (1.f + 2.f * engine->game->inspired[ship->owner][p]);
-            
+            float score = static_cast<float>(engine->game->grid[p]) / 4.f * (1.f - std::pow(.75f, mining_turns)) / .25f * (1.f + 2.f * engine->game->inspired[ship->owner][p]);
+
             score = std::min(MAX_CARGO - ship->halite, static_cast<int>(score));
 
             score /= 1. + engine->game->grid.dist(ship->pos, p);
@@ -336,11 +162,11 @@ Point DirectSearch::find_mining_site(Ship *ship, bool first)
         }
         //std::cerr << std::endl;
     }
-    
+
     if (first)
     {
         Ship *other = targeted[best];
-        if (other != nullptr) 
+        if (other != nullptr)
         {
             if (engine->game->grid.dist(ship->pos, best) < engine->game->grid.dist(other->pos, best))
                 targeted[best] = ship;
@@ -352,7 +178,7 @@ Point DirectSearch::find_mining_site(Ship *ship, bool first)
     return best;
 }
 
-Point DirectSearch::find_mining_sector(Ship *ship)
+Point HeurBot::find_mining_sector(Ship *ship)
 {
     /*
     std::sort(std::begin(engine->game->sectors), std::end(engine->game->sectors),
@@ -362,21 +188,19 @@ Point DirectSearch::find_mining_sector(Ship *ship)
     */
     int best_score = 0;
     Point best = ship->pos;
-    for (auto& sector : engine->game->sectors)
+    for (auto &sector : engine->game->sectors)
     {
         int score = sector.halite / (engine->game->dist_to_dropoff[sector.centroid] + engine->game->grid.dist(sector.centroid, ship->pos));
         if (score > best_score)
         {
             best_score = score;
             best = sector.centroid;
-            
         }
     }
     return best;
 }
 
-
-void DirectSearch::navigate()
+void HeurBot::navigate()
 {
     std::sort(engine->game->me->ships.begin(), engine->game->me->ships.end(),
               [](Ship *a, Ship *b) {
@@ -411,18 +235,17 @@ void DirectSearch::navigate()
         {
             if (endgame)
             {
-                for(auto& dropoff : engine->game->me->dropoffs)
+                for (auto &dropoff : engine->game->me->dropoffs)
                     ship_on_tile[dropoff->pos] = nullptr;
             }
             //std::cerr << "SUCCESS " << ship->id << " to " << moves_str[ship->action] << std::endl;
         }
         else
             std::cerr << "FAIL " << ship->id << std::endl;
-        
     }
 }
 
-bool DirectSearch::move_ship_dir(Ship *ship, int dir)
+bool HeurBot::move_ship_dir(Ship *ship, int dir)
 {
     Point n = ship->pos + moves_dir[dir];
     engine->game->grid.normalize(n);
@@ -445,7 +268,7 @@ bool DirectSearch::move_ship_dir(Ship *ship, int dir)
     else if (mode == MODE_4P)
     {
         // any ship currently on this spot
-        Ship* anyone = engine->game->ships_grid[n];
+        Ship *anyone = engine->game->ships_grid[n];
         if (anyone == nullptr || (anyone != nullptr && anyone->owner == engine->game->my_id))
         {
             ship_on_tile[n] = ship;
@@ -466,8 +289,11 @@ bool DirectSearch::move_ship_dir(Ship *ship, int dir)
 }
 
 // returns true if found successful move (i.e. no collision)
-bool DirectSearch::move_ship(Ship *ship, Ship *forcing)
+bool HeurBot::move_ship(Ship *ship, Ship *forcing)
 {
+    if (TURNTIME >= 1900.)
+        return true;
+
     if (ship->target == ship->pos)
     {
         if (move_ship_dir(ship, 0))
@@ -477,7 +303,7 @@ bool DirectSearch::move_ship(Ship *ship, Ship *forcing)
     if (engine->can_move(ship))
     {
         //std::cerr<< *ship << " wants to go to " << ship->target << " from " << ship->pos << std::endl;
-        int dirs[5] = {0, 1, 2 , 3, 4};
+        int dirs[5] = {0, 1, 2, 3, 4};
 
         std::sort(std::begin(dirs), std::end(dirs), [this, ship](int &a, int &b) {
             Point na = ship->pos + moves_dir[a], nb = ship->pos + moves_dir[b];
@@ -485,10 +311,12 @@ bool DirectSearch::move_ship(Ship *ship, Ship *forcing)
             engine->game->grid.normalize(nb);
             int da = engine->game->grid.dist(ship->target, na);
             int db = engine->game->grid.dist(ship->target, nb);
-            
+
             // priority: 1- distance, 2- cost
-            if (da != db)   return da < db;
-            else            return engine->game->grid[na] < engine->game->grid[nb];
+            if (da != db)
+                return da < db;
+            else
+                return engine->game->grid[na] < engine->game->grid[nb];
         });
 
         for (auto i : dirs)
@@ -537,20 +365,17 @@ bool DirectSearch::move_ship(Ship *ship, Ship *forcing)
         // can stay still?
         if (move_ship_dir(ship, 0))
             return true;
-        
+
         else
         {
             std::cerr << "FAIL - unmovable - " << *ship << std::endl;
-            
-            Ship* other_ship = ship_on_tile[ship->pos];
+
+            Ship *other_ship = ship_on_tile[ship->pos];
 
             ship_on_tile[ship->pos] = ship;
             ship->just_moved = true;
             ship->action = 0;
             other_ship->just_moved = false;
-
-            if (TURNTIME >= 1800.)
-                return true;
 
             if (forcing != other_ship && move_ship(other_ship, ship))
             {
