@@ -5,6 +5,8 @@
 
 #define NOW std::chrono::high_resolution_clock::now()
 #define TURNTIME std::chrono::duration_cast<std::chrono::microseconds>(NOW - start).count() / 1000.
+auto start = NOW;
+
 Solution GASearch::search(float time_limit)
 {
     auto start = NOW;
@@ -174,6 +176,8 @@ float Search::evaluate(Solution &sol)
 Solution DirectSearch::search(float time_limit)
 {
     std::cerr << "Time limit " << time_limit << std::endl;
+    start = NOW;
+    
     ship_on_tile.reset();
     targeted.reset();
 
@@ -317,7 +321,8 @@ Point DirectSearch::find_mining_site(Ship *ship, bool first)
 
             int mining_turns = std::max(0, 2 * radius - engine->game->grid.dist(ship->pos, p));
             float score = static_cast<float>(engine->game->grid[p]) / 4.f
-            * (1.f - std::pow(.75f, mining_turns)) / .25f;
+            * (1.f - std::pow(.75f, mining_turns)) / .25f 
+            * (1.f + 2.f * engine->game->inspired[ship->owner][p]);
             
             score = std::min(MAX_CARGO - ship->halite, static_cast<int>(score));
 
@@ -543,6 +548,9 @@ bool DirectSearch::move_ship(Ship *ship, Ship *forcing)
             ship->just_moved = true;
             ship->action = 0;
             other_ship->just_moved = false;
+
+            if (TURNTIME >= 1800.)
+                return true;
 
             if (forcing != other_ship && move_ship(other_ship, ship))
             {

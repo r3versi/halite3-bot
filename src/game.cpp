@@ -82,12 +82,12 @@ void Game::turn_update()
 
         for (size_t j = 0; j < n_ships; j++)
         {
-            int ship_id, x, y, cargo;
-            std::cin >> ship_id >> x >> y >> cargo;
+            int ship_id, x0, y0, cargo;
+            std::cin >> ship_id >> x0 >> y0 >> cargo;
 
             Ship* ship = ships + ship_id;
             
-            ship->update(ship_id, id, x, y, cargo);
+            ship->update(ship_id, id, x0, y0, cargo);
             players[id].ships.put(ship);
             ships_grid[ship->pos] = ship;
             
@@ -102,7 +102,24 @@ void Game::turn_update()
 
                     unsafe[k][n] = true;
                 }
-            }            
+            }
+
+            for (int y = y0 - 3; y <= y0 + 3; ++y)
+            {
+                int delta = 3 - std::abs(y - y0);
+                for (int x = x0 - delta; x <= x0 + delta; ++x)
+                {
+                    for (size_t k = 0; k < num_players; k++)
+                    {
+                        if (k == id)
+                            continue;
+                        
+                        Point n = Point(x,y);
+                        grid.normalize(n);
+                        inspired[k][n] += 1;
+                    }
+                }
+            }
         }
 
         for (size_t j = 0; j < n_dropoffs; j++)
@@ -167,6 +184,11 @@ void Game::run_statistics()
             
             // And now i really don't remember how i computed this. i had to add a comment, my bad. to be reviewed soon.
             turns_to_collect[p] = static_cast<int>(.5f + log(200.f / std::max(200, grid[p])) / log(.75f));
+
+            for (size_t k = 0; k < num_players; k++)
+            {
+                inspired[k][p] = inspired[k][p] > 1? 1 : 0;
+            }
         }
     }
 
