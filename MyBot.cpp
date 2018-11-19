@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 
     //game.dump();
 
-    cout << "HeurBot v1" << endl;
+    cout << "HeurBot v20" << endl;
     while (true)
     {
         game.turn_update();

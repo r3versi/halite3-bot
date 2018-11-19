@@ -28,7 +28,8 @@ class Game
     // 1 for player
     Grid<int> inspired[4];
     Grid<bool> unsafe[4];
-
+    Grid<int> ships_around[4];
+    
     // location -> ship at the beginning of the turn
     Grid<Ship *> ships_grid;
 

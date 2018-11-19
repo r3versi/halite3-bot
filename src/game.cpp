@@ -43,6 +43,7 @@ void Game::init_input()
     {
         inspired[i] = Grid<int>(map_width, map_height);
         unsafe[i] = Grid<bool>(map_width, map_height);
+        ships_around[i] = Grid<int>(map_width, map_height);
     }
     total_halite = 0;
 
@@ -68,6 +69,7 @@ void Game::turn_update()
     {
         inspired[i].reset();
         unsafe[i].reset();
+        ships_around[i].reset();
     }
     ships_grid.reset();
     set_ships_dead();
@@ -109,13 +111,15 @@ void Game::turn_update()
                 int delta = 4 - std::abs(y - y0);
                 for (int x = x0 - delta; x <= x0 + delta; ++x)
                 {
+                    Point n = Point(x, y);
+                    grid.normalize(n);
+
+                    ships_around[id][n] += 1;
                     for (size_t k = 0; k < num_players; k++)
                     {
                         if (k == id)
                             continue;
-                        
-                        Point n = Point(x,y);
-                        grid.normalize(n);
+
                         inspired[k][n] += 1;
                     }
                 }

@@ -19,7 +19,6 @@ void HeurBot::search()
 
 void HeurBot::make_dropoff()
 {
-    return;
     if (game->me->dropoffs.size() < max_dropoffs() &&
         game->max_turn - game->turn > 150)
     {
@@ -54,7 +53,7 @@ void HeurBot::spawn_ship()
     if (game->me->halite >= 1000 &&
         game->me->ships.size() < max_ships() &&
         ship_on_tile[game->me->spawn] == nullptr &&
-        game->max_turn - game->turn > 150)
+        game->max_turn - game->turn > 100)
     {
         game->me->action = true;
     }
@@ -114,7 +113,7 @@ void HeurBot::assign_tasks()
 
         Point deliver_site = find_deliver_site(ship);
 
-        if (ship->halite >= 950 || (ship->task == DELIVER && ship->halite > 0) || (endgame && game->grid.dist(ship->pos, deliver_site) >= remaining_turns - 5))
+        if (ship->halite >= 900 || (ship->task == DELIVER && ship->halite > 0) || (endgame && game->grid.dist(ship->pos, deliver_site) >= remaining_turns - 5))
         {
             ship->task = DELIVER;
             ship->target = deliver_site;
@@ -284,7 +283,7 @@ bool HeurBot::move_ship_dir(Ship *ship, int dir)
     }
     else if (mode == MODE_4P)
     {
-        
+
         // any ship currently on this spot
         Ship *anyone = game->ships_grid[n];
         if (anyone == nullptr || (anyone != nullptr && anyone->owner == game->my_id))
@@ -297,10 +296,16 @@ bool HeurBot::move_ship_dir(Ship *ship, int dir)
     }
     else
     {
-        ship_on_tile[n] = ship;
-        ship->just_moved = true;
-        ship->action = dir;
-        return true;
+        Ship *anyone = game->ships_grid[n];
+        if (anyone == nullptr || 
+           (anyone != nullptr && (anyone->owner == me->id || game->ships_around[me->id][n] > game->ships_around[anyone->owner][n])
+        ))
+        {
+            ship_on_tile[n] = ship;
+            ship->just_moved = true;
+            ship->action = dir;
+            return true;
+        }
     }
 
     return false;
