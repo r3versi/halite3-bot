@@ -13,43 +13,59 @@ void HeurBot::search()
 
     assign_tasks();
     navigate();
+    make_dropoff();
+    spawn_ship();
+}
 
-    if (engine->game->me->dropoffs.size() < max_dropoffs() &&
-        engine->game->max_turn - engine->game->turn > 100)
+void HeurBot::make_dropoff()
+{
+    return;
+    if (game->me->dropoffs.size() < max_dropoffs() &&
+        game->max_turn - game->turn > 150)
     {
         Ship *best = nullptr;
         int max_dist = 0;
-        for (auto &ship : engine->game->me->ships)
+        for (auto &ship : game->me->ships)
         {
-            if (ship->halite + engine->game->me->halite + engine->game->grid[ship->pos] >= 4000 &&
-                engine->game->dist_to_dropoff[ship->pos] > max_dist)
+            if (ship->halite + game->me->halite + game->grid[ship->pos] >= 4000 &&
+                game->dist_to_dropoff[ship->pos] > max_dist)
             {
-                max_dist = engine->game->dist_to_dropoff[ship->pos];
+                max_dist = game->dist_to_dropoff[ship->pos];
                 best = ship;
             }
         }
 
         if (best != nullptr && max_dist >= 25)
         {
-            engine->game->me->halite -= (4000 - best->halite - engine->game->grid[best->pos]);
+            game->me->halite -= (4000 - best->halite - game->grid[best->pos]);
             best->action = 5;
         }
     }
-
-    if (engine->game->me->halite >= 1000 &&
-        engine->game->me->ships.size() < max_ships() &&
-        ship_on_tile[engine->game->me->spawn] == nullptr &&
-        engine->game->max_turn - engine->game->turn > 100)
+}
+void HeurBot::spawn_ship()
+{
+    /*
+    if (me->halite >= 1000 && ship_on_tile[game->me->spawn] == nullptr && game->turn <= game->max_turn/2)
+        me->action = true;
+    else
+        me->action = false;
+    */
+    
+    if (game->me->halite >= 1000 &&
+        game->me->ships.size() < max_ships() &&
+        ship_on_tile[game->me->spawn] == nullptr &&
+        game->max_turn - game->turn > 150)
     {
-        engine->game->me->action = true;
+        game->me->action = true;
     }
     else
-        engine->game->me->action = false;
+        game->me->action = false;
+    
 }
 
 unsigned int HeurBot::max_dropoffs()
 {
-    int map_id = (engine->game->map_width - 32) / 8;
+    int map_id = (game->map_width - 32) / 8;
     if (mode == MODE_2P)
         return MAX_DROPOFFS_2P[map_id];
     else
@@ -60,15 +76,15 @@ unsigned int HeurBot::max_ships()
 {
     // <100 per tile = min, > 200 per tile = max
     // # ships = MIN + (MAX - MIN)* (min(200, max(100, tot/(size*size))) - 100)/100
-    int map_id = (engine->game->map_width - 32) / 8;
+    int map_id = (game->map_width - 32) / 8;
     unsigned int ships = 0;
     if (mode == MODE_2P)
     {
-        ships = MIN_SHIPS_2P[map_id] + (MAX_SHIPS_2P[map_id] - MIN_SHIPS_2P[map_id]) * (std::min(UPPER_BOUND_2P[map_id], std::max(LOWER_BOUND_2P[map_id], (float)engine->game->total_halite / (engine->game->map_width * engine->game->map_width))) - 100.f) / 100.f;
+        ships = MIN_SHIPS_2P[map_id] + (MAX_SHIPS_2P[map_id] - MIN_SHIPS_2P[map_id]) * (std::min(UPPER_BOUND_2P[map_id], std::max(LOWER_BOUND_2P[map_id], (float)game->total_halite / (game->map_width * game->map_width))) - 100.f) / 100.f;
     }
     else
     {
-        ships = MIN_SHIPS_4P[map_id] + (MAX_SHIPS_4P[map_id] - MIN_SHIPS_4P[map_id]) * (std::min(UPPER_BOUND_4P[map_id], std::max(LOWER_BOUND_4P[map_id], (float)engine->game->total_halite / (engine->game->map_width * engine->game->map_width))) - 100.f) / 100.f;
+        ships = MIN_SHIPS_4P[map_id] + (MAX_SHIPS_4P[map_id] - MIN_SHIPS_4P[map_id]) * (std::min(UPPER_BOUND_4P[map_id], std::max(LOWER_BOUND_4P[map_id], (float)game->total_halite / (game->map_width * game->map_width))) - 100.f) / 100.f;
     }
     return ships;
 }
@@ -77,10 +93,10 @@ std::string HeurBot::get_commands()
 {
     std::string commands = "";
 
-    if (engine->game->me->action)
+    if (game->me->action)
         commands += "g ";
 
-    for (auto &ship : engine->game->me->ships)
+    for (auto &ship : game->me->ships)
         commands += ship->get_command();
 
     return commands;
@@ -88,17 +104,17 @@ std::string HeurBot::get_commands()
 
 void HeurBot::assign_tasks()
 {
-    int remaining_turns = engine->game->max_turn - engine->game->turn;
-    endgame = remaining_turns < (int)engine->game->map_width;
+    int remaining_turns = game->max_turn - game->turn;
+    endgame = remaining_turns < (int)game->map_width;
 
-    for (auto &ship : engine->game->me->ships)
+    for (auto &ship : game->me->ships)
     {
         if (!ship->active)
             continue;
 
         Point deliver_site = find_deliver_site(ship);
 
-        if (ship->halite >= 900 || (ship->task == DELIVER && ship->halite > 0) || (endgame && engine->game->grid.dist(ship->pos, deliver_site) >= remaining_turns - 5))
+        if (ship->halite >= 950 || (ship->task == DELIVER && ship->halite > 0) || (endgame && game->grid.dist(ship->pos, deliver_site) >= remaining_turns - 5))
         {
             ship->task = DELIVER;
             ship->target = deliver_site;
@@ -113,7 +129,7 @@ void HeurBot::assign_tasks()
     }
 
     std::cerr << "RECOMPUTE TASKS" << std::endl;
-    for (auto &ship : engine->game->me->ships)
+    for (auto &ship : game->me->ships)
     {
         if (!ship->active || ship->task != GOTO)
             continue;
@@ -128,7 +144,7 @@ Point HeurBot::find_deliver_site(Ship *ship)
     if (!ship->active)
         std::cerr << "Ship not active!" << std::endl;
 
-    return engine->game->nearest_dropoff[ship->pos]->pos;
+    return game->nearest_dropoff[ship->pos]->pos;
 }
 
 Point HeurBot::find_mining_site(Ship *ship, bool first)
@@ -136,23 +152,24 @@ Point HeurBot::find_mining_site(Ship *ship, bool first)
     float best_score = 0.;
     Point best = ship->pos;
     //std::cerr << *ship << std::endl;
-    int radius = engine->game->map_width / 2;
+    int radius = std::min(game->map_width / 2, (game->max_turn - game->turn)/2);
+
     for (int dy = -radius; dy <= radius; dy++)
     {
         for (int dx = -radius; dx <= radius; dx++)
         {
             Point p = ship->pos + Point(dx, dy);
-            engine->game->grid.normalize(p);
+            game->grid.normalize(p);
 
             if (!first && targeted[p] != nullptr && targeted[p] != ship)
                 continue;
 
-            int mining_turns = std::max(0, 2 * radius - engine->game->grid.dist(ship->pos, p));
-            float score = static_cast<float>(engine->game->grid[p]) / 4.f * (1.f - std::pow(.75f, mining_turns)) / .25f * (1.f + 2.f * engine->game->inspired[ship->owner][p]);
+            int mining_turns = std::max(0, 2 * radius - game->grid.dist(ship->pos, p));
+            float score = static_cast<float>(game->grid[p]) / 4.f * (1.f - std::pow(.75f, mining_turns)) / .25f * (1.f + 2.f * game->inspired[ship->owner][p]);
 
             score = std::min(MAX_CARGO - ship->halite, static_cast<int>(score));
 
-            score /= 1. + engine->game->grid.dist(ship->pos, p);
+            score /= 1. + game->grid.dist(ship->pos, p);
             if (score > best_score)
             {
                 best_score = score;
@@ -168,7 +185,7 @@ Point HeurBot::find_mining_site(Ship *ship, bool first)
         Ship *other = targeted[best];
         if (other != nullptr)
         {
-            if (engine->game->grid.dist(ship->pos, best) < engine->game->grid.dist(other->pos, best))
+            if (game->grid.dist(ship->pos, best) < game->grid.dist(other->pos, best))
                 targeted[best] = ship;
         }
         else
@@ -181,16 +198,16 @@ Point HeurBot::find_mining_site(Ship *ship, bool first)
 Point HeurBot::find_mining_sector(Ship *ship)
 {
     /*
-    std::sort(std::begin(engine->game->sectors), std::end(engine->game->sectors),
+    std::sort(std::begin(game->sectors), std::end(game->sectors),
               [this, ship](Sector &a, Sector &b) {
-                  return a.halite / (engine->game->dist_to_dropoff[a.centroid]) > b.halite / (engine->game->dist_to_dropoff[b.centroid]);
+                  return a.halite / (game->dist_to_dropoff[a.centroid]) > b.halite / (game->dist_to_dropoff[b.centroid]);
               });
     */
     int best_score = 0;
     Point best = ship->pos;
-    for (auto &sector : engine->game->sectors)
+    for (auto &sector : game->sectors)
     {
-        int score = sector.halite / (engine->game->dist_to_dropoff[sector.centroid] + engine->game->grid.dist(sector.centroid, ship->pos));
+        int score = sector.halite / (game->dist_to_dropoff[sector.centroid] + game->grid.dist(sector.centroid, ship->pos));
         if (score > best_score)
         {
             best_score = score;
@@ -202,7 +219,7 @@ Point HeurBot::find_mining_sector(Ship *ship)
 
 void HeurBot::navigate()
 {
-    std::sort(engine->game->me->ships.begin(), engine->game->me->ships.end(),
+    std::sort(game->me->ships.begin(), game->me->ships.end(),
               [](Ship *a, Ship *b) {
                   if (a->task != b->task)
                       return a->task < b->task;
@@ -210,7 +227,7 @@ void HeurBot::navigate()
                   return a->halite > b->halite;
               });
 
-    for (auto &ship : engine->game->me->ships)
+    for (auto &ship : game->me->ships)
     {
         if (!ship->active)
             continue;
@@ -226,7 +243,7 @@ void HeurBot::navigate()
         ship->just_moved = false;
     }
 
-    for (auto &ship : engine->game->me->ships)
+    for (auto &ship : game->me->ships)
     {
         if (ship->just_moved || !ship->active)
             continue;
@@ -235,7 +252,7 @@ void HeurBot::navigate()
         {
             if (endgame)
             {
-                for (auto &dropoff : engine->game->me->dropoffs)
+                for (auto &dropoff : game->me->dropoffs)
                     ship_on_tile[dropoff->pos] = nullptr;
             }
             //std::cerr << "SUCCESS " << ship->id << " to " << moves_str[ship->action] << std::endl;
@@ -248,7 +265,7 @@ void HeurBot::navigate()
 bool HeurBot::move_ship_dir(Ship *ship, int dir)
 {
     Point n = ship->pos + moves_dir[dir];
-    engine->game->grid.normalize(n);
+    game->grid.normalize(n);
 
     // my ship plans to move there next turn
     Ship *other_ship = ship_on_tile[n];
@@ -257,7 +274,7 @@ bool HeurBot::move_ship_dir(Ship *ship, int dir)
 
     if (ship->task == DELIVER)
     {
-        if (!engine->game->unsafe[ship->owner][n])
+        if (!game->unsafe[ship->owner][n])
         {
             ship_on_tile[n] = ship;
             ship->just_moved = true;
@@ -267,9 +284,10 @@ bool HeurBot::move_ship_dir(Ship *ship, int dir)
     }
     else if (mode == MODE_4P)
     {
+        
         // any ship currently on this spot
-        Ship *anyone = engine->game->ships_grid[n];
-        if (anyone == nullptr || (anyone != nullptr && anyone->owner == engine->game->my_id))
+        Ship *anyone = game->ships_grid[n];
+        if (anyone == nullptr || (anyone != nullptr && anyone->owner == game->my_id))
         {
             ship_on_tile[n] = ship;
             ship->just_moved = true;
@@ -307,16 +325,16 @@ bool HeurBot::move_ship(Ship *ship, Ship *forcing)
 
         std::sort(std::begin(dirs), std::end(dirs), [this, ship](int &a, int &b) {
             Point na = ship->pos + moves_dir[a], nb = ship->pos + moves_dir[b];
-            engine->game->grid.normalize(na);
-            engine->game->grid.normalize(nb);
-            int da = engine->game->grid.dist(ship->target, na);
-            int db = engine->game->grid.dist(ship->target, nb);
+            game->grid.normalize(na);
+            game->grid.normalize(nb);
+            int da = game->grid.dist(ship->target, na);
+            int db = game->grid.dist(ship->target, nb);
 
             // priority: 1- distance, 2- cost
             if (da != db)
                 return da < db;
             else
-                return engine->game->grid[na] < engine->game->grid[nb];
+                return game->grid[na] < game->grid[nb];
         });
 
         for (auto i : dirs)
@@ -328,7 +346,7 @@ bool HeurBot::move_ship(Ship *ship, Ship *forcing)
         for (auto dir : dirs)
         {
             Point n = ship->pos + moves_dir[dir];
-            engine->game->grid.normalize(n);
+            game->grid.normalize(n);
 
             Ship *other_ship = ship_on_tile[n];
             if (other_ship == nullptr)

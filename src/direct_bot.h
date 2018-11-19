@@ -10,16 +10,21 @@ class HeurBot
     bool mode;
     bool endgame;
     Engine *engine;
+    Game* game;
+    Player* me;
 
     Grid<Ship *> ship_on_tile; // ship on tile next turn
     Grid<Ship *> targeted;     // mining site targeted by
 
     HeurBot(Engine *engine) : engine(engine)
     {
-        ship_on_tile = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
-        targeted = Grid<Ship *>(engine->game->map_width, engine->game->map_height);
+        game = engine->game;
+        me = game->me;
+
+        ship_on_tile = Grid<Ship *>(game->map_width, game->map_height);
+        targeted = Grid<Ship *>(game->map_width, game->map_height);
         endgame = false;
-        mode = engine->game->num_players == 2 ? MODE_2P : MODE_4P;
+        mode = game->num_players == 2 ? MODE_2P : MODE_4P;
     }
 
     void search();
@@ -30,6 +35,9 @@ class HeurBot
 
     void assign_tasks();
     void navigate();
+    
+    void make_dropoff();
+    void spawn_ship();
 
     Point find_deliver_site(Ship *ship);
     Point find_mining_site(Ship *ship, bool first = true);
