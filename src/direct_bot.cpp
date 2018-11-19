@@ -12,9 +12,16 @@ void HeurBot::search()
     targeted.reset();
 
     assign_tasks();
+    std::cerr << "@" << TURNTIME << " ms \t"
+              << "Tasks assigned" << std::endl;
     navigate();
+    std::cerr << "@" << TURNTIME << " ms \t"
+              << "Navigation completed" << std::endl;
+
     make_dropoff();
     spawn_ship();
+    std::cerr << "@" << TURNTIME << " ms \t"
+              << "Dropoffs and spawns decided" << std::endl;
 }
 
 void HeurBot::make_dropoff()

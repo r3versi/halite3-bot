@@ -40,8 +40,8 @@ const float UPPER_BOUND_4P[5] = {277.1f, 232.1f, 222.9f, 197.9f, 263.0f};
 const int MAX_DROPOFFS_2P[5] = {1, 1, 2, 4, 6};
 const int MAX_DROPOFFS_4P[5] = {1, 1, 2, 3, 3};
 
-const int MIN_SHIPS_2P[5] = {25, 30, 45, 55, 55};
-const int MAX_SHIPS_2P[5] = {40, 50, 60, 80, 100};
+const int MIN_SHIPS_2P[5] = {25, 30, 50, 70, 70};
+const int MAX_SHIPS_2P[5] = {40, 50, 60, 90, 100};
 
-const int MIN_SHIPS_4P[5] = {20, 25, 30, 40, 40};
-const int MAX_SHIPS_4P[5] = {35, 40, 50, 60, 70};
+const int MIN_SHIPS_4P[5] = {20, 25, 35, 55, 55};
+const int MAX_SHIPS_4P[5] = {35, 40, 50, 70, 80};

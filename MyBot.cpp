@@ -36,7 +36,7 @@ int main(int argc, char *argv[])
 
     //game.dump();
 
-    cout << "HeurBot v20" << endl;
+    cout << "HeurBot v21" << endl;
     while (true)
     {
         game.turn_update();
@@ -44,13 +44,14 @@ int main(int argc, char *argv[])
         START = NOW;
 
         cerr << endl
+             << "@" << TURNTIME << " ms \t" 
              << "TURN " << game.turn
-             << " @" << TURNTIME << " ms" << endl;
+             << endl;
 
         solver.search();
 
-        cerr << "Search terminated"
-             << " @" << TURNTIME << " ms" << endl
+        cerr << "@" << TURNTIME << " ms \t"
+             << "Search terminated"
              << "Commands string= {"
              << solver.get_commands() << "}" << endl;
 
