@@ -18,7 +18,7 @@ void Game::init_input()
     std::cin >> num_players >> my_id;
     me = players + my_id;
 
-    for (size_t i = 0; i < num_players; i++)
+    for (int i = 0; i < num_players; i++)
     {
         int id, x, y;
         std::cin >> id >> x >> y;
@@ -28,7 +28,7 @@ void Game::init_input()
 
     std::cin >> map_width >> map_height;
 
-    max_turn = 400 + static_cast<size_t>(100.f / 32.f * (static_cast<float>(map_width) - 32.f));
+    max_turn = 400 + static_cast<int>(100.f / 32.f * (static_cast<float>(map_width) - 32.f));
 
     grid = Map(map_width, map_height);
     cache_grid = Map(map_width, map_height);
@@ -39,7 +39,7 @@ void Game::init_input()
     nearest_dropoff = Grid<Dropoff*>(map_width, map_height);
     ships_grid = Grid<Ship *>(map_width, map_height);
 
-    for(size_t i = 0; i < num_players; i++)
+    for(int i = 0; i < num_players; i++)
     {
         inspired[i] = Grid<int>(map_width, map_height);
         unsafe[i] = Grid<bool>(map_width, map_height);
@@ -47,10 +47,10 @@ void Game::init_input()
     }
     total_halite = 0;
 
-    size_t halite;
-    for (size_t y = 0; y < map_height; y++)
+    int halite;
+    for (int y = 0; y < map_height; y++)
     {
-        for (size_t x = 0; x < map_width; x++)
+        for (int x = 0; x < map_width; x++)
         {
             std::cin >> halite;
             grid.at(x, y) = halite;
@@ -65,7 +65,7 @@ void Game::turn_update()
     // ./halite feeds 1 based turn, i like 0 based
     std::cin >> turn;
 
-    for (size_t i = 0; i < num_players; i++)
+    for (int i = 0; i < num_players; i++)
     {
         inspired[i].reset();
         unsafe[i].reset();
@@ -74,15 +74,15 @@ void Game::turn_update()
     ships_grid.reset();
     set_ships_dead();
 
-    for (size_t i = 0; i < num_players; i++)
+    for (int i = 0; i < num_players; i++)
     {
     
-        size_t id, n_ships, n_dropoffs, halite;
+        int id, n_ships, n_dropoffs, halite;
         std::cin >> id >> n_ships >> n_dropoffs >> halite;
     
         players[id].update(halite);
 
-        for (size_t j = 0; j < n_ships; j++)
+        for (int j = 0; j < n_ships; j++)
         {
             int ship_id, x0, y0, cargo;
             std::cin >> ship_id >> x0 >> y0 >> cargo;
@@ -97,7 +97,7 @@ void Game::turn_update()
             {
                 Point n = ship->pos + dir;
                 grid.normalize(n);
-                for (size_t k = 0; k < num_players; k++)
+                for (int k = 0; k < num_players; k++)
                 {
                     if (k == id)
                         continue;
@@ -115,7 +115,7 @@ void Game::turn_update()
                     grid.normalize(n);
 
                     ships_around[id][n] += 1;
-                    for (size_t k = 0; k < num_players; k++)
+                    for (int k = 0; k < num_players; k++)
                     {
                         if (k == id)
                             continue;
@@ -126,7 +126,7 @@ void Game::turn_update()
             }
         }
 
-        for (size_t j = 0; j < n_dropoffs; j++)
+        for (int j = 0; j < n_dropoffs; j++)
         {
             int dropoff_id, x, y;
             std::cin >> dropoff_id >> x >> y;
@@ -136,10 +136,10 @@ void Game::turn_update()
         }
     }
 
-    size_t tiles;
+    int tiles;
     std::cin >> tiles;
 
-    for (size_t i = 0; i < tiles; i++)
+    for (int i = 0; i < tiles; i++)
     {
         int x, y, halite;
         std::cin >> x >> y >> halite;
@@ -153,9 +153,9 @@ void Game::turn_update()
 
 void Game::run_statistics()
 {    
-    for(size_t x = 0; x < map_width; x++)
+    for(int x = 0; x < map_width; x++)
     {
-        for(size_t y = 0; y < map_height; y++)
+        for(int y = 0; y < map_height; y++)
         {   
             Point p = Point(x,y);
             // Neighbourhood
@@ -189,7 +189,7 @@ void Game::run_statistics()
             // And now i really don't remember how i computed this. i had to add a comment, my bad. to be reviewed soon.
             turns_to_collect[p] = static_cast<int>(.5f + log(200.f / std::max(200, grid[p])) / log(.75f));
 
-            for (size_t k = 0; k < num_players; k++)
+            for (int k = 0; k < num_players; k++)
             {
                 inspired[k][p] = inspired[k][p] > 1? 1 : 0;
             }
@@ -202,7 +202,7 @@ void Game::run_statistics()
 void Game::update_sectors()
 {
     int side = map_width / SECTOR_ROW;
-    for(size_t i = 0; i < NUM_SECTORS; i++)
+    for(int i = 0; i < NUM_SECTORS; i++)
     {
         int x0 = (i%SECTOR_ROW)*side, y0 = (i/SECTOR_ROW)*side;
         long unsigned sum_x = 0, sum_y = 0, sum_weights = 0, sum_halite = 0;
@@ -249,7 +249,7 @@ void Game::dump(bool dump_map)
         std::cerr << grid << std::endl;
     }
 
-    for (size_t i = 0; i < num_players; i++)
+    for (int i = 0; i < num_players; i++)
     {
         std::cerr << players[i] << std::endl;
 
@@ -267,7 +267,7 @@ void Game::dump(bool dump_map)
 
 void Game::set_ships_dead()
 {
-    for(size_t i = 0; i < num_players; i++)
+    for(int i = 0; i < num_players; i++)
     {
         for (auto &ship : players[i].ships)
             ship->active = false;

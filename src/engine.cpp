@@ -14,7 +14,7 @@ void Engine::play_turn()
 
 void Engine::inspire()
 {
-    for (size_t i = 0; i < game->num_players; i++)
+    for (int i = 0; i < game->num_players; i++)
     {
         for (auto &ship : game->players[i].ships)
         {
@@ -28,7 +28,7 @@ void Engine::inspire()
 
 void Engine::commit_moves()
 {
-    for (size_t i = 0; i < game->num_players; i++)
+    for (int i = 0; i < game->num_players; i++)
     {
         if (game->players[i].action)
         {
@@ -45,7 +45,7 @@ void Engine::commit_moves()
 
 void Engine::mine()
 {
-    for (size_t i = 0; i < game->num_players; i++)
+    for (int i = 0; i < game->num_players; i++)
     {
         for (auto &ship : game->players[i].ships)
         {
@@ -62,7 +62,7 @@ void Engine::collisions()
     Mask taken = Mask(game->map_width, game->map_height);
     Mask dead = Mask(game->map_width, game->map_height);
 
-    for (size_t i = 0; i < game->num_players; i++)
+    for (int i = 0; i < game->num_players; i++)
     {
         for (auto &ship : game->players[i].ships)
         {
@@ -76,7 +76,7 @@ void Engine::collisions()
     }
 
     // set not active colliding ships and drop halite
-    for (size_t i = 0; i < game->num_players; i++)
+    for (int i = 0; i < game->num_players; i++)
     {
         for (auto &ship : game->players[i].ships)
         {
@@ -93,7 +93,7 @@ void Engine::collisions()
     }
 
     // give halite dropped on dropoffs to players
-    for (size_t i = 0; i < game->num_players; i++)
+    for (int i = 0; i < game->num_players; i++)
     {
         for (auto &dropoff : game->players[i].dropoffs)
         {
@@ -108,7 +108,7 @@ void Engine::collisions()
 
 void Engine::drop_halite()
 {
-    for(size_t i = 0; i < game->num_players; i++)
+    for(int i = 0; i < game->num_players; i++)
     {
         for(auto& ship : game->players[i].ships)
         {
@@ -189,9 +189,9 @@ void Engine::mine(Ship *ship)
 void Engine::update_inspiration(Ship *ship)
 {
     int count = 0;
-    for (size_t i = 0; i < game->num_players; i++)
+    for (int i = 0; i < game->num_players; i++)
     {
-        if (i == (unsigned)ship->owner)
+        if (i == ship->owner)
             continue;
 
         for (auto &enemy_ship : game->players[i].ships)

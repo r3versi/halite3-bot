@@ -11,8 +11,8 @@ class Game
 {
   public:
     int my_id;
-    size_t num_players, map_width, map_height, turn;
-    size_t max_turn;
+    int num_players, map_width, map_height, turn;
+    int max_turn;
     Player* me;
 
     Map grid;

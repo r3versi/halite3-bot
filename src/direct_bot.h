@@ -32,7 +32,8 @@ class HeurBot
 
     unsigned int max_ships();
     unsigned int max_dropoffs();
-
+    int enemy_count(Point& n);
+    
     void assign_tasks();
     void navigate();
     

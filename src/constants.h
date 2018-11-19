@@ -21,9 +21,10 @@ const unsigned long INSPIRATION_SHIP_COUNT = 2;
 
 // ship tasks (~ order priority)
 const int NONE = -1;
-const int DELIVER = 0;
-const int GOTO = 1;
-const int MINE = 2;
+const int FOUND = 0;
+const int DELIVER = 1;
+const int TRAVEL = 2;
+const int MINE = 3;
 
 const int MODE_2P = 0, MODE_4P = 1;
 

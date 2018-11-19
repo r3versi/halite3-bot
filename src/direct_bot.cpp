@@ -120,7 +120,7 @@ void HeurBot::assign_tasks()
         }
         else
         {
-            ship->task = GOTO;
+            ship->task = TRAVEL;
             ship->target = find_mining_site(ship, true);
         }
 
@@ -130,7 +130,7 @@ void HeurBot::assign_tasks()
     std::cerr << "RECOMPUTE TASKS" << std::endl;
     for (auto &ship : game->me->ships)
     {
-        if (!ship->active || ship->task != GOTO)
+        if (!ship->active || ship->task != TRAVEL)
             continue;
 
         ship->target = find_mining_site(ship, false);
@@ -261,6 +261,19 @@ void HeurBot::navigate()
     }
 }
 
+int HeurBot::enemy_count(Point& n)
+{
+    int count = 0;
+    for(int i = 0; i < game->num_players; i++)
+    {
+        if (i == game->my_id)
+            continue;
+        
+        count += game->ships_around[i][n];
+    }
+    return count;    
+}
+
 bool HeurBot::move_ship_dir(Ship *ship, int dir)
 {
     Point n = ship->pos + moves_dir[dir];
@@ -283,10 +296,10 @@ bool HeurBot::move_ship_dir(Ship *ship, int dir)
     }
     else if (mode == MODE_4P)
     {
-
         // any ship currently on this spot
         Ship *anyone = game->ships_grid[n];
-        if (anyone == nullptr || (anyone != nullptr && anyone->owner == game->my_id))
+        if (anyone == nullptr || 
+           (anyone != nullptr && (anyone->owner == game->my_id)))
         {
             ship_on_tile[n] = ship;
             ship->just_moved = true;
@@ -297,9 +310,8 @@ bool HeurBot::move_ship_dir(Ship *ship, int dir)
     else
     {
         Ship *anyone = game->ships_grid[n];
-        if (anyone == nullptr || 
-           (anyone != nullptr && (anyone->owner == me->id || game->ships_around[me->id][n] > game->ships_around[anyone->owner][n])
-        ))
+        if (anyone == nullptr ||
+            (anyone != nullptr && (anyone->owner == me->id || game->ships_around[me->id][n] > enemy_count(n))))
         {
             ship_on_tile[n] = ship;
             ship->just_moved = true;
