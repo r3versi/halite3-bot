@@ -322,9 +322,8 @@ bool HeurBot::move_ship_dir(Ship *ship, int dir)
     else if (mode == MODE_4P)
     {
         // any ship currently on this spot
-        Ship *anyone = game->ships_grid[n];
-        if (anyone == nullptr || 
-           (anyone != nullptr && (anyone->owner == game->my_id)))
+        if (!game->unsafe[ship->owner][n] ||
+            (game->unsafe[ship->owner][n] && game->ships_around[me->id][n] > enemy_count(n)))
         {
             ship_on_tile[n] = ship;
             ship->just_moved = true;
