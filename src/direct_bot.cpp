@@ -56,20 +56,38 @@ void HeurBot::spawn_ship()
     else
         me->action = false;
     */
-    
-    if (game->me->halite >= 1000 &&
-        game->me->ships.size() < max_ships() &&
-        ship_on_tile[game->me->spawn] == nullptr &&
-        game->max_turn - game->turn > 100)
+    if (mode == MODE_2P)
     {
-        game->me->action = true;
+        Player* opponent = &game->players[(me->id + 1) % 2];
+        if (me->halite >= 1000 && 
+            game->max_turn - game->turn > 100 && 
+            ship_on_tile[game->me->spawn] == nullptr && 
+            me->ships.size() - opponent->ships.size() < 10)
+        {
+            me->action = true;
+        }
+        
+        else
+        {
+            me->action = false;
+        }
+        
     }
     else
-        game->me->action = false;
-    
+    {
+        if (game->me->halite >= 1000 &&
+            game->me->ships.size() < max_ships() &&
+            ship_on_tile[game->me->spawn] == nullptr &&
+            game->max_turn - game->turn > 100)
+        {
+            game->me->action = true;
+        }
+        else
+            game->me->action = false;
+    }
 }
 
-unsigned int HeurBot::max_dropoffs()
+int HeurBot::max_dropoffs()
 {
     int map_id = (game->map_width - 32) / 8;
     if (mode == MODE_2P)
@@ -78,7 +96,7 @@ unsigned int HeurBot::max_dropoffs()
         return MAX_DROPOFFS_4P[map_id];
 }
 
-unsigned int HeurBot::max_ships()
+int HeurBot::max_ships()
 {
     // <100 per tile = min, > 200 per tile = max
     // # ships = MIN + (MAX - MIN)* (min(200, max(100, tot/(size*size))) - 100)/100
@@ -291,7 +309,7 @@ bool HeurBot::move_ship_dir(Ship *ship, int dir)
     if (other_ship != nullptr)
         return false;
 
-    if (ship->task == DELIVER)
+    if (ship->task == DELIVER && game->dist_to_dropoff[ship->pos] > 2)
     {
         if (!game->unsafe[ship->owner][n])
         {

@@ -111,7 +111,7 @@ Solution Search::get_rnd()
 {
     Solution sol = Solution();
 
-    for (size_t i = 0; i < engine->game->me->ships.size(); i++)
+    for (int i = 0; i < engine->game->me->ships.size(); i++)
     {
         ShipSolution ship_sol = ShipSolution();
 
