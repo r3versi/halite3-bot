@@ -26,6 +26,19 @@ void HeurBot::search()
 
 void HeurBot::make_dropoff()
 {
+    /*
+    if (mode == MODE_2P)
+    {
+        if (me->dropoffs.size() < max_dropoffs() && game->max_turn - game->turn > 150)
+        {
+            if (me->ships.size() > 15)
+            {
+                
+            }
+        }
+        return;
+    }
+    */
     if (game->me->dropoffs.size() < max_dropoffs() &&
         game->max_turn - game->turn > 150)
     {
@@ -48,6 +61,7 @@ void HeurBot::make_dropoff()
         }
     }
 }
+
 void HeurBot::spawn_ship()
 {
     /*
@@ -189,7 +203,7 @@ Point HeurBot::find_mining_site(Ship *ship, bool first)
                 continue;
 
             int mining_turns = std::max(0, 2 * radius - game->grid.dist(ship->pos, p));
-            float score = static_cast<float>(game->grid[p]) / 4.f * (1.f - std::pow(.75f, mining_turns)) / .25f * (1.f + 2.f * game->inspired[ship->owner][p]);
+            float score = static_cast<float>(game->grid[p]) / 4.f * (1.f - std::pow(.75f, mining_turns)) / .25f * (1.f + (mode == MODE_4P) * 2.f * game->inspired[ship->owner][p]);
 
             score = std::min(MAX_CARGO - ship->halite, static_cast<int>(score));
 
@@ -427,8 +441,6 @@ bool HeurBot::move_ship(Ship *ship, Ship *forcing)
 
         else
         {
-            std::cerr << "FAIL - unmovable - " << *ship << std::endl;
-
             Ship *other_ship = ship_on_tile[ship->pos];
 
             ship_on_tile[ship->pos] = ship;
