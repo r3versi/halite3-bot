@@ -29,7 +29,7 @@ void HeurBot::make_dropoff()
     /*
     if (mode == MODE_2P)
     {
-        if (me->dropoffs.size() < max_dropoffs() && game->max_turn - game->turn > 150)
+        if (me->dropoffs.size() < max_dropoffs() && game->max_turn - game->turn > 100)
         {
             if (me->ships.size() > 15)
             {
@@ -46,6 +46,16 @@ void HeurBot::make_dropoff()
         int max_dist = 0;
         for (auto &ship : game->me->ships)
         {
+            
+            for(int i = 0; i < game->num_players; ++i)
+            {
+                for(auto &dropoff : game->players[i].dropoffs)
+                {
+                    if (dropoff->pos == ship->pos)
+                        continue;
+                }
+            }
+
             if (ship->halite + game->me->halite + game->grid[ship->pos] >= 4000 &&
                 game->dist_to_dropoff[ship->pos] > max_dist)
             {
@@ -54,7 +64,7 @@ void HeurBot::make_dropoff()
             }
         }
 
-        if (best != nullptr && max_dist >= 25)
+        if (best != nullptr && max_dist >= 20)
         {
             game->me->halite -= (4000 - best->halite - game->grid[best->pos]);
             best->action = 5;
@@ -365,7 +375,11 @@ bool HeurBot::move_ship_dir(Ship *ship, int dir)
 bool HeurBot::move_ship(Ship *ship, Ship *forcing)
 {
     if (TURNTIME >= 1500.)
-        return true;
+    {
+        std::cerr << "@" << TURNTIME << " ms \t" 
+                  << "Imballato " << ship << " forced by " << forcing << std::endl;
+            return true;
+    }
 
     if (ship->target == ship->pos)
     {
@@ -413,7 +427,7 @@ bool HeurBot::move_ship(Ship *ship, Ship *forcing)
             }
             else
             {
-                if (other_ship != forcing)
+                if (other_ship != forcing && engine->can_move(other_ship))
                 {
                     ship_on_tile[n] = ship;
                     ship->just_moved = true;
@@ -421,9 +435,7 @@ bool HeurBot::move_ship(Ship *ship, Ship *forcing)
                     other_ship->just_moved = false;
 
                     if (move_ship(other_ship, ship))
-                    {
                         return true;
-                    }
 
                     // if can't force move, reset previous situation!
                     ship_on_tile[n] = other_ship;
@@ -441,15 +453,16 @@ bool HeurBot::move_ship(Ship *ship, Ship *forcing)
         else
         {
             Ship *other_ship = ship_on_tile[ship->pos];
-
             ship_on_tile[ship->pos] = ship;
             ship->just_moved = true;
             ship->action = 0;
-            other_ship->just_moved = false;
-
-            if (forcing != other_ship && move_ship(other_ship, ship))
+            
+            if (other_ship != nullptr)
             {
-                return true;
+                other_ship->just_moved = false;
+
+                if (forcing != other_ship && move_ship(other_ship, ship))
+                    return true;
             }
         }
     }

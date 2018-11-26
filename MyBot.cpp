@@ -51,7 +51,7 @@ int main(int argc, char *argv[])
         solver.search();
 
         cerr << "@" << TURNTIME << " ms \t"
-             << "Search terminated"
+             << "Search terminated" << endl
              << "Commands string= {"
              << solver.get_commands() << "}" << endl;
 
