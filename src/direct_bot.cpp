@@ -85,8 +85,8 @@ void HeurBot::spawn_ship()
         Player* opponent = &game->players[(me->id + 1) % 2];
         if (me->halite >= 1000 && 
             game->max_turn - game->turn > 100 && 
-            ship_on_tile[game->me->spawn] == nullptr && 
-            me->ships.size() - opponent->ships.size() < 10)
+            ship_on_tile[game->me->spawn] == nullptr /*&& 
+            me->ships.size() - opponent->ships.size() < 10*/)
         {
             me->action = true;
         }
@@ -374,7 +374,7 @@ bool HeurBot::move_ship_dir(Ship *ship, int dir)
 // returns true if found successful move (i.e. no collision)
 bool HeurBot::move_ship(Ship *ship, Ship *forcing)
 {
-    if (TURNTIME >= 1500.)
+    if (TURNTIME >= TIME_LIMIT)
     {
         std::cerr << "@" << TURNTIME << " ms \t" 
                   << "Imballato " << ship << " forced by " << forcing << std::endl;

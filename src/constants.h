@@ -5,6 +5,8 @@ const unsigned long MAX_DROPOFFS = 25;
 const unsigned long MAX_DEPTH = 10;
 const unsigned long MAX_CLUSTER_SIZE = 30;
 
+const float TIME_LIMIT = 500.f;
+
 // linear num of sectors
 const int SECTOR_ROW = 4;
 const int NUM_SECTORS = SECTOR_ROW*SECTOR_ROW;
