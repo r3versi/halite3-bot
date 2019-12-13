@@ -2,15 +2,16 @@
 
 #include <src/game.h>
 #include <src/engine.h>
-#include <src/search.h>
+#include <src/direct_bot.h>
+
+// #include <src/search.h>
 
 using namespace std;
 using namespace std::chrono;
 
 #define NOW high_resolution_clock::now()
-#define TURNTIME duration_cast<microseconds>(NOW - start).count() / 1000.
-
-static auto start = NOW;
+#define TURNTIME duration_cast<microseconds>(NOW - START).count() / 1000.
+time_point<high_resolution_clock> START = NOW;
 
 int main(int argc, char *argv[])
 {
@@ -28,30 +29,32 @@ int main(int argc, char *argv[])
 
     //RandomSearch solver = RandomSearch(6, &engine);
     //GASearch solver = GASearch(5, 6, &engine);
-    DirectSearch solver = DirectSearch(0, &engine);
+    HeurBot solver = HeurBot(&engine);
 
     std::ofstream err_log("logs/"+to_string(game.my_id)+"_test_out.txt");
     std::cerr.rdbuf(err_log.rdbuf());
 
     //game.dump();
 
-    cout << "MyCrappyBotV1" << endl;
+    cout << "HeurBot v21" << endl;
     while (true)
     {
         game.turn_update();
         game.save();
-        start = NOW;
+        START = NOW;
 
         cerr << endl
+             << "@" << TURNTIME << " ms \t" 
              << "TURN " << game.turn
-             << " @" << TURNTIME << " ms" << endl;
+             << endl;
 
-        solver.search(1000.);
+        solver.search();
 
-        cerr << "Search terminated"
-             << " @" << TURNTIME << " ms" << endl;
+        cerr << "@" << TURNTIME << " ms \t"
+             << "Search terminated" << endl
+             << "Commands string= {"
+             << solver.get_commands() << "}" << endl;
 
-        cerr << "Commands string= \" " << solver.get_commands() << endl;
         cout << solver.get_commands() << endl;
     }
 

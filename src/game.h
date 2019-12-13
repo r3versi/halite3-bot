@@ -4,11 +4,15 @@
 #include <constants.h>
 
 #include <chrono>
+
+extern std::chrono::time_point<std::chrono::high_resolution_clock> START;
+
 class Game
 {
   public:
-    size_t my_id, num_players, map_width, map_height, turn;
-    size_t max_turn;
+    int my_id;
+    int num_players, map_width, map_height, turn;
+    int max_turn;
     Player* me;
 
     Map grid;
@@ -24,7 +28,8 @@ class Game
     // 1 for player
     Grid<int> inspired[4];
     Grid<bool> unsafe[4];
-
+    Grid<int> ships_around[4];
+    
     // location -> ship at the beginning of the turn
     Grid<Ship *> ships_grid;
 

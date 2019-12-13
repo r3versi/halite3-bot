@@ -149,8 +149,10 @@ class Dropoff : public Entity
     Dropoff() : Entity() {}
     Dropoff(int id, int owner, int x, int y) : Entity(id, owner, x, y) {}
 
-    inline void update(int x, int y)
+    inline void update(int id, int owner, int x, int y)
     {
+        this->id = id;
+        this->owner = owner;
         active = true;
         pos = Point(x, y);
     }
@@ -164,7 +166,7 @@ using PlayerDropoffs = Container<MAX_DROPOFFS, Dropoff *>;
 class Player
 {
   public:
-    size_t id, halite;
+    int id, halite;
     Point spawn;
 
     int action;
@@ -173,12 +175,12 @@ class Player
     PlayerDropoffs dropoffs;
 
     Player() : id(0), halite(0), spawn(0, 0), action(0), ships(), dropoffs() {}
-    Player(size_t id, int x, int y, Dropoff *shipyard) : id(id), halite(0), spawn(x, y), action(0)
+    Player(int id, int x, int y, Dropoff *shipyard) : id(id), halite(0), spawn(x, y), action(0)
     {
         dropoffs.put(shipyard);
     }
 
-    void update(size_t halite)
+    void update(int halite)
     {
         this->action = 0;
         this->halite = halite;
